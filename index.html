@@ -3,170 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบฟอร์มส่งงาน & สรุปยอดขาย (มีประกัน)</title>
+  <title>🌸 ระบบจัดการ Netflix 4K & กราฟวิเคราะห์กำไร 🧸</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- โหลด Chart.js สำหรับวาดกราฟ -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Kanit', sans-serif; }
+    body { font-family: 'Kanit', sans-serif; background-color: #fff5f7; }
   </style>
 </head>
-<body class="bg-indigo-50 min-h-screen p-4 flex items-center justify-center">
+<body class="min-h-screen p-3 sm:p-6 flex items-center justify-center">
 
-  <div class="bg-white rounded-3xl shadow-xl w-full max-w-lg p-6 border-2 border-indigo-100">
+  <div class="bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-xl w-full max-w-2xl p-5 sm:p-8 border-2 border-pink-100">
     <div class="text-center mb-5">
-      <h1 class="text-2xl font-bold text-indigo-600" id="mainTitle">🐧 ระบบส่งงาน & สรุปยอดขาย (มีประกัน) 🍿</h1>
-      <p class="text-xs text-gray-500 mt-1">เลือกแอป ➔ เช็คจอว่าง ➔ สร้างฟอร์ม & บันทึกยอดขายอัตโนมัติ</p>
+      <h1 class="text-xl sm:text-2xl font-bold text-pink-600">🌸 ระบบจัดการ Netflix ละมุนนี & กราฟกำไร 🧸🍿</h1>
+      <p class="text-xs text-gray-400 mt-1">แยกบัญชีแม่ชัดเจน ➔ กรองจอว่างอัตโนมัติ ➔ กราฟสถิติจจัดเต็ม</p>
     </div>
 
-    <!-- เมนูสลับหน้าเว็บ (ฟอร์มส่งงาน vs สรุปยอดขาย) -->
-    <div class="mb-4 bg-gray-100 p-1 rounded-2xl flex gap-1">
-      <button type="button" id="navFormBtn" onclick="switchTab('form')" class="flex-1 py-2 text-xs font-semibold rounded-xl transition duration-200 bg-white text-indigo-600 shadow-sm">
-        📝 ฟอร์มส่งงาน
+    <!-- เมนูหลักสลับหน้า (Tabs) -->
+    <div class="mb-5 bg-pink-50 p-1.5 rounded-2xl grid grid-cols-4 gap-1 text-[11px] sm:text-xs">
+      <button type="button" id="navFormBtn" onclick="switchTab('form')" class="py-2.5 font-semibold rounded-xl transition bg-pink-500 text-white shadow-sm">
+        💌 ส่งฟอร์ม
       </button>
-      <button type="button" id="navSalesBtn" onclick="switchTab('sales')" class="flex-1 py-2 text-xs font-semibold rounded-xl transition duration-200 text-gray-600 hover:text-indigo-600">
-        💰 สรุปยอดขาย (Dashboard)
+      <button type="button" id="navStoreBtn" onclick="switchTab('store')" class="py-2.5 font-semibold rounded-xl transition text-gray-500 hover:text-pink-600">
+        📦 คลังบัญชี
+      </button>
+      <button type="button" id="navCalendarBtn" onclick="switchTab('calendar')" class="py-2.5 font-semibold rounded-xl transition text-gray-500 hover:text-pink-600">
+        📅 จอว่าง
+      </button>
+      <button type="button" id="navProfitBtn" onclick="switchTab('profit')" class="py-2.5 font-semibold rounded-xl transition text-gray-500 hover:text-pink-600">
+        📊 กราฟกำไร
       </button>
     </div>
 
     <!-- ================= TAB 1: ฟอร์มส่งงาน ================= -->
-    <div id="sectionForm">
-      <!-- 1. เลือกแอปพลิเคชัน -->
-      <div class="mb-4">
-        <label class="block text-xs font-medium text-gray-700 mb-1">เลือกบริการ (App)</label>
-        <div class="grid grid-cols-4 gap-1.5 bg-gray-100 p-1.5 rounded-2xl">
-          <label class="flex flex-col items-center justify-center py-2 text-xs font-semibold rounded-xl cursor-pointer bg-white text-indigo-600 shadow-sm" id="tab-netflix" onclick="switchApp('netflix')">
-            <span>🍿</span> Netflix
-          </label>
-          <label class="flex flex-col items-center justify-center py-2 text-xs font-semibold rounded-xl cursor-pointer text-gray-600 hover:text-indigo-600" id="tab-youtube" onclick="switchApp('youtube')">
-            <span>▶️</span> YouTube
-          </label>
-          <label class="flex flex-col items-center justify-center py-2 text-xs font-semibold rounded-xl cursor-pointer text-gray-600 hover:text-indigo-600" id="tab-disney" onclick="switchApp('disney')">
-            <span>✨</span> Disney+
-          </label>
-          <label class="flex flex-col items-center justify-center py-2 text-xs font-semibold rounded-xl cursor-pointer text-gray-600 hover:text-indigo-600" id="tab-spotify" onclick="switchApp('spotify')">
-            <span>🎧</span> Spotify
-          </label>
-        </div>
+    <div id="sectionForm" class="space-y-4">
+      <div class="bg-pink-50/60 p-3 rounded-2xl border border-pink-200 text-xs text-pink-700 flex justify-between items-center">
+        <span>✨ ระบบเลือกจอว่างให้อัตโนมัติ ป้องกันการขายซ้ำ!</span>
+        <button type="button" onclick="switchTab('store')" class="bg-pink-500 text-white px-2.5 py-1 rounded-xl text-[10px] font-bold">➕ เพิ่มบัญชีใหม่</button>
       </div>
 
-      <!-- 💡 คำแนะนำความคุ้มค่า -->
-      <div class="mb-4 bg-emerald-50 border border-emerald-200 p-2.5 rounded-2xl flex items-center gap-2 text-emerald-800 text-xs">
-        <span class="text-base">💡</span>
-        <div>
-          <span class="font-semibold">แนะนำความคุ้มค่า:</span> แพ็กเกจระยะเวลา <span id="recommendText" class="font-bold underline">30 วัน</span> คุ้มค่าและนิยมขายดีที่สุด!
-        </div>
-      </div>
-
-      <!-- 2. คลังข้อมูลบัญชี & เช็คสถานะจอว่าง -->
-      <details class="mb-4 bg-indigo-50/70 rounded-2xl border border-indigo-200 p-3" id="storeDetails">
-        <summary class="text-xs font-bold text-indigo-700 cursor-pointer flex justify-between items-center">
-          <span>💾 คลังข้อมูล & เช็ควันหมดอายุ / จอว่าง</span>
-          <span class="text-[10px] text-indigo-500 font-normal">(คลิกเพื่อจัดการบัญชี)</span>
-        </summary>
-        
-        <div class="mt-3 space-y-2 text-xs">
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-gray-600 mb-0.5">Email บัญชี</label>
-              <input type="email" id="storeEmail" placeholder="account@gmail.com" class="w-full p-2 rounded-lg border border-indigo-200 focus:outline-none bg-white">
-            </div>
-            <div>
-              <label class="block text-gray-600 mb-0.5">Pass (รหัสผ่าน)</label>
-              <input type="text" id="storePass" placeholder="password123" class="w-full p-2 rounded-lg border border-indigo-200 focus:outline-none bg-white">
-            </div>
-          </div>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="block text-gray-600 mb-0.5">ชื่อจอ/โปรไฟล์</label>
-              <input type="text" id="storeScreen" placeholder="เช่น จอ 1" class="w-full p-2 rounded-lg border border-indigo-200 text-center bg-white">
-            </div>
-            <div>
-              <label class="block text-gray-600 mb-0.5">PIN จอ</label>
-              <input type="text" id="storePin" placeholder="1234" class="w-full p-2 rounded-lg border border-indigo-200 text-center bg-white">
-            </div>
-            <div>
-              <label class="block text-gray-600 mb-0.5">วันหมดอายุจอ</label>
-              <input type="date" id="storeExpDate" class="w-full p-1.5 rounded-lg border border-indigo-200 text-center bg-white text-[11px]">
-            </div>
-          </div>
-
-          <div class="flex gap-2 pt-1">
-            <button type="button" id="btnSaveStore" onclick="saveToStore()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-xl transition shadow">
-              💾 บันทึก / อัปเดตข้อมูลจอ
-            </button>
-            <button type="button" id="btnCancelEdit" onclick="cancelEditMode()" class="hidden bg-gray-400 hover:bg-gray-500 text-white font-medium px-3 py-2 rounded-xl transition">
-              ยกเลิก
-            </button>
-          </div>
-
-          <div class="pt-2 border-t border-indigo-200/60 mt-2">
-            <button type="button" onclick="toggleStoreTable()" class="w-full text-[11px] font-semibold text-indigo-800 bg-indigo-100 hover:bg-indigo-200 py-1.5 rounded-lg transition flex items-center justify-center gap-1">
-              📊 ดูสถานะจอว่างและวันหมดอายุทั้งหมดในคลัง
-            </button>
-          </div>
-
-          <!-- ตารางแสดงสถานะจอว่าง / หมดอายุ -->
-          <div id="storeTableWrapper" class="hidden mt-2 max-h-48 overflow-y-auto border border-indigo-200 rounded-lg bg-white p-2">
-            <table class="w-full text-left text-[11px]">
-              <thead>
-                <tr class="border-b text-gray-500">
-                  <th class="pb-1">Email / จอ</th>
-                  <th class="pb-1 text-center">PIN</th>
-                  <th class="pb-1 text-center">หมดอายุ</th>
-                  <th class="pb-1 text-center">สถานะ</th>
-                  <th class="pb-1 text-right">จัดการ</th>
-                </tr>
-              </thead>
-              <tbody id="storeTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </details>
-
-      <form id="serviceForm" onsubmit="generateText(event)" class="space-y-4">
-        
-        <!-- 3. เลือกอุปกรณ์, ระยะเวลา และราคาขาย -->
-        <div class="grid grid-cols-2 gap-3">
+      <form id="serviceForm" onsubmit="generateText(event)" class="space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">เลือกอุปกรณ์</label>
-            <div class="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-xl">
-              <label class="flex items-center justify-center py-1.5 text-xs font-medium rounded-lg cursor-pointer has-[:checked]:bg-white has-[:checked]:text-indigo-600 has-[:checked]:shadow-sm">
+            <label class="block text-xs font-medium text-gray-600 mb-1">เลือกอุปกรณ์</label>
+            <div class="grid grid-cols-2 gap-1 bg-pink-50 p-1 rounded-2xl">
+              <label class="flex items-center justify-center py-2 text-xs font-medium rounded-xl cursor-pointer has-[:checked]:bg-white has-[:checked]:text-pink-600 has-[:checked]:shadow-sm">
                 <input type="radio" name="device" value="มือถือ" checked class="hidden"> 📱 มือถือ
               </label>
-              <label class="flex items-center justify-center py-1.5 text-xs font-medium rounded-lg cursor-pointer has-[:checked]:bg-white has-[:checked]:text-indigo-600 has-[:checked]:shadow-sm">
+              <label class="flex items-center justify-center py-2 text-xs font-medium rounded-xl cursor-pointer has-[:checked]:bg-white has-[:checked]:text-pink-600 has-[:checked]:shadow-sm">
                 <input type="radio" name="device" value="ทีวี" class="hidden"> 📺 ทีวี
               </label>
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">ระยะเวลาใช้งาน</label>
-            <select id="daysSelect" onchange="calculateExpDate()" class="w-full px-3 py-1.5 text-xs rounded-xl border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
+            <label class="block text-xs font-medium text-gray-600 mb-1">ระยะเวลาที่ลูกค้าซื้อ</label>
+            <select id="daysSelect" onchange="calculateExpDate()" class="w-full px-3 py-2 text-xs rounded-2xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-300 bg-white">
               <option value="1">01 วัน</option>
               <option value="3">03 วัน</option>
               <option value="7">07 วัน (1 สัปดาห์)</option>
-              <option value="15">15 วัน (กึ่งเดือน)</option>
-              <option value="30" selected>30 วัน (คุ้มที่สุด 🔥)</option>
+              <option value="15">15 วัน</option>
+              <option value="30" selected>30 วัน (คุ้มสุดๆ 🔥)</option>
             </select>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">วันหมดอายุ (คำนวณอัตโนมัติ)</label>
-            <input type="text" id="expDate" readonly class="w-full px-3 py-1.5 text-xs font-semibold text-center rounded-xl border border-gray-200 bg-gray-100 text-gray-700">
+            <label class="block text-xs font-medium text-gray-600 mb-1">วันหมดอายุ (ตัดรอบ 22:00 น.)</label>
+            <input type="text" id="expDate" readonly class="w-full px-3 py-2 text-xs font-semibold text-center rounded-2xl border border-pink-100 bg-pink-50/50 text-gray-600">
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">ราคาขาย (บาท)</label>
-            <input type="number" id="salePrice" value="65" class="w-full px-3 py-1.5 text-xs font-semibold text-center rounded-xl border border-indigo-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+            <label class="block text-xs font-medium text-gray-600 mb-1">ราคาขาย (บาท)</label>
+            <input type="number" id="salePrice" value="65" class="w-full px-3 py-2 text-xs font-semibold text-center rounded-2xl border border-pink-200 bg-white focus:outline-none focus:ring-2 focus:ring-pink-300">
           </div>
         </div>
 
-        <!-- 4. ส่วนกล่องฟอร์มกรอกข้อมูล -->
+        <!-- รายการฟอร์มหลายจอ -->
         <div>
-          <div class="flex justify-between items-center mb-2">
-            <label class="block text-xs font-medium text-gray-700">รายการฟอร์มที่ต้องการส่ง:</label>
-            <button type="button" onclick="addFormBlock()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1 rounded-xl shadow transition">
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="block text-xs font-medium text-gray-600">รายการฟอร์มที่ต้องการส่ง:</label>
+            <button type="button" onclick="addFormBlock()" class="text-xs bg-pink-500 hover:bg-pink-600 text-white font-semibold px-3.5 py-1.5 rounded-xl shadow transition">
               ➕ เพิ่มฟอร์มถัดไป
             </button>
           </div>
@@ -174,168 +92,216 @@
           <div id="formBlocksContainer" class="space-y-3"></div>
         </div>
 
-        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition text-sm shadow-md mt-2">
-          ✨ สร้างข้อความ, บันทึกยอดขาย & คัดลอก
+        <button type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-2xl transition text-sm shadow-md mt-2">
+          ✨ สร้างข้อความรวม & บันทึกยอดขาย
         </button>
-
       </form>
 
       <!-- พรีวิวข้อความ -->
-      <div class="mt-6">
-        <label class="block text-xs font-medium text-gray-500 mb-1">ตัวอย่างข้อความพร้อมส่ง:</label>
-        <textarea id="output" rows="16" readonly class="w-full p-3 text-xs bg-slate-50 border border-gray-200 rounded-xl font-mono whitespace-pre text-gray-700 focus:outline-none"></textarea>
+      <div class="mt-4">
+        <label class="block text-xs font-medium text-gray-400 mb-1">ตัวอย่างข้อความพร้อมส่ง:</label>
+        <textarea id="output" rows="10" readonly class="w-full p-3 text-xs bg-pink-50/30 border border-pink-200 rounded-2xl font-mono whitespace-pre text-gray-600 focus:outline-none"></textarea>
       </div>
     </div>
 
-    <!-- ================= TAB 2: สรุปยอดขาย ================= -->
-    <div id="sectionSales" class="hidden space-y-4">
-      <!-- การ์ดสรุปภาพรวม -->
-      <div class="grid grid-cols-2 gap-3">
-        <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-2xl text-center">
-          <p class="text-[11px] text-emerald-600 font-medium">ยอดขายรวมทั้งหมด</p>
-          <h2 class="text-xl font-bold text-emerald-700 mt-1" id="totalRevenue">0 บาท</h2>
+    <!-- ================= TAB 2: คลังบัญชีแม่ & จอ ================= -->
+    <div id="sectionStore" class="hidden space-y-4">
+      <div class="bg-pink-50/70 p-4 rounded-3xl border border-pink-200 space-y-3">
+        <h2 class="text-xs font-bold text-pink-700" id="storeFormTitle">🌸 เพิ่มบัญชีแม่และกำหนดจอ</h2>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="block text-gray-500 mb-0.5">Email บัญชีแม่</label>
+            <input type="email" id="accEmail" placeholder="netflix@gmail.com" class="w-full p-2.5 rounded-xl border border-pink-200 bg-white">
+          </div>
+          <div>
+            <label class="block text-gray-500 mb-0.5">รหัสผ่าน (Pass)</label>
+            <input type="text" id="accPass" placeholder="@Pass123" class="w-full p-2.5 rounded-xl border border-pink-200 bg-white">
+          </div>
         </div>
-        <div class="bg-blue-50 border border-blue-200 p-3 rounded-2xl text-center">
-          <p class="text-[11px] text-blue-600 font-medium">จำนวนออเดอร์ที่ขาย</p>
-          <h2 class="text-xl font-bold text-blue-700 mt-1" id="totalOrders">0 รายการ</h2>
-        </div>
-      </div>
 
-      <!-- สรุปแยกตามแอป -->
-      <div class="bg-gray-50 border border-gray-200 p-3 rounded-2xl text-xs space-y-2">
-        <p class="font-bold text-gray-700">📊 ยอดขายแยกตามประเภทแอป:</p>
-        <div class="grid grid-cols-2 gap-2 text-gray-600">
-          <div class="bg-white p-2 rounded-xl border">🍿 Netflix: <span id="revNetflix" class="font-bold text-indigo-600">0 ฿</span></div>
-          <div class="bg-white p-2 rounded-xl border">▶️ YouTube: <span id="revYoutube" class="font-bold text-indigo-600">0 ฿</span></div>
-          <div class="bg-white p-2 rounded-xl border">✨ Disney+: <span id="revDisney" class="font-bold text-indigo-600">0 ฿</span></div>
-          <div class="bg-white p-2 rounded-xl border">🎧 Spotify: <span id="revSpotify" class="font-bold text-indigo-600">0 ฿</span></div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+          <div>
+            <label class="block text-gray-500 mb-0.5">ต้นทุนซื้อมา (บาท)</label>
+            <input type="number" id="accCost" placeholder="150" class="w-full p-2.5 rounded-xl border border-pink-200 text-center bg-white font-bold text-pink-600">
+          </div>
+          <div>
+            <label class="block text-gray-500 mb-0.5">จำนวนวันทั้งหมด</label>
+            <input type="number" id="accTotalDays" value="30" class="w-full p-2.5 rounded-xl border border-pink-200 text-center bg-white">
+          </div>
+          <div>
+            <label class="block text-gray-500 mb-0.5">วันหมดอายุบัญชี</label>
+            <input type="date" id="accExpDate" class="w-full p-2 rounded-xl border border-pink-200 text-center bg-white text-[11px]">
+          </div>
         </div>
-      </div>
 
-      <!-- ตารางประวัติการขาย -->
-      <div>
-        <div class="flex justify-between items-center mb-2">
-          <label class="block text-xs font-medium text-gray-700">📜 ประวัติการขายล่าสุด:</label>
-          <button type="button" onclick="clearSalesHistory()" class="text-[11px] bg-red-100 hover:bg-red-200 text-red-600 px-2 py-1 rounded-lg transition font-medium">
-            🗑️ ล้างประวัติทั้งหมด
+        <!-- ส่วนกำหนดจอ 1 ถึง 5 และ PIN -->
+        <div class="border-t border-pink-200/60 pt-2 text-xs space-y-2">
+          <label class="block font-bold text-pink-700">🖥️ กำหนดรายชื่อจอและ PIN (เช่น จอ 1 ถึง 4):</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div><input type="text" id="screen1" placeholder="จอ 1 (เช่น L1)" class="w-full p-2 rounded-lg border text-center bg-white"></div>
+            <div><input type="text" id="pin1" placeholder="PIN 1" class="w-full p-2 rounded-lg border text-center bg-white"></div>
+            <div><input type="text" id="screen2" placeholder="จอ 2 (เช่น L2)" class="w-full p-2 rounded-lg border text-center bg-white"></div>
+            <div><input type="text" id="pin2" placeholder="PIN 2" class="w-full p-2 rounded-lg border text-center bg-white"></div>
+            <div><input type="text" id="screen3" placeholder="จอ 3 (เช่น L3)" class="w-full p-2 rounded-lg border text-center bg-white"></div>
+            <div><input type="text" id="pin3" placeholder="PIN 3" class="w-full p-2 rounded-lg border text-center bg-white"></div>
+            <div><input type="text" id="screen4" placeholder="จอ 4 (เช่น L4)" class="w-full p-2 rounded-lg border text-center bg-white"></div>
+            <div><input type="text" id="pin4" placeholder="PIN 4" class="w-full p-2 rounded-lg border text-center bg-white"></div>
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-1">
+          <button type="button" id="btnSaveAcc" onclick="saveAccount()" class="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-medium py-2.5 rounded-xl transition shadow text-xs">
+            💾 บันทึกบัญชีแม่เข้าคลัง
+          </button>
+          <button type="button" id="btnCancelAcc" onclick="cancelAccountEdit()" class="hidden bg-gray-300 text-gray-700 font-medium px-4 py-2.5 rounded-xl text-xs">
+            ยกเลิก
           </button>
         </div>
+      </div>
 
-        <div class="max-h-64 overflow-y-auto border border-gray-200 rounded-2xl bg-white p-2">
-          <table class="w-full text-left text-[11px]">
+      <!-- ตารางแสดงบัญชีแม่ทั้งหมด -->
+      <div class="border border-pink-200 rounded-3xl bg-white p-3 text-xs">
+        <p class="font-bold text-pink-700 mb-2">📋 รายชื่อบัญชีแม่ทั้งหมดในระบบ:</p>
+        <div class="max-h-56 overflow-y-auto">
+          <table class="w-full text-left">
             <thead>
               <tr class="border-b text-gray-400">
-                <th class="pb-1.5">เวลา / แอป</th>
-                <th class="pb-1.5">รายละเอียดจอ</th>
-                <th class="pb-1.5 text-right">ราคา</th>
-                <th class="pb-1.5 text-right">ลบ</th>
+                <th class="pb-1.5">Email / ทุน</th>
+                <th class="pb-1.5 text-center">จำนวนจอ</th>
+                <th class="pb-1.5 text-center">หมดอายุ</th>
+                <th class="pb-1.5 text-right">จัดการ</th>
               </tr>
             </thead>
-            <tbody id="salesTableBody">
-              <tr><td colspan="4" class="text-center py-4 text-gray-400">ยังไม่มีประวัติการขาย</td></tr>
-            </tbody>
+            <tbody id="storeTableBody"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 3: ปฏิทินจอว่าง ================= -->
+    <div id="sectionCalendar" class="hidden space-y-3 text-xs">
+      <div class="bg-pink-50 border border-pink-200 p-4 rounded-3xl">
+        <p class="font-bold text-pink-800 mb-1">📅 ปฏิทินเช็คสถานะจอว่าง (แนะนำจอที่ควรปล่อยขาย):</p>
+        <p class="text-gray-500">ระบบคัดกรองจอที่ว่างหรือพร้อมขายมาให้คุณเลือกใช้งานได้ทันที</p>
+      </div>
+
+      <div class="max-h-96 overflow-y-auto space-y-2.5" id="calendarContainer"></div>
+    </div>
+
+    <!-- ================= TAB 4: กราฟสถิติ & กำไร ================= -->
+    <div id="sectionProfit" class="hidden space-y-4 text-xs">
+      <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-3xl">
+        <p class="font-bold text-emerald-800 mb-1">🧸 สถิติยอดขาย ต้นทุน & กำไรสูงสุด:</p>
+        <p class="text-emerald-700">วิเคราะห์ผลประกอบการผ่านกราฟและแผนภูมิสถิติ เข้าใจง่ายในพริบตา</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-blue-50 border border-blue-200 p-3.5 rounded-2xl text-center">
+          <p class="text-[11px] text-blue-600 font-medium">ยอดขายรวมทั้งหมด</p>
+          <h2 class="text-lg font-bold text-blue-700 mt-0.5" id="totalRev">0 บาท</h2>
+        </div>
+        <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-center">
+          <p class="text-[11px] text-emerald-600 font-medium">กำไรสุทธิ</p>
+          <h2 class="text-lg font-bold text-emerald-700 mt-0.5" id="totalProfit">0 บาท</h2>
+        </div>
+      </div>
+
+      <!-- ส่วนแสดงกราฟ 3 แบบ -->
+      <div class="space-y-4 bg-white p-4 rounded-3xl border border-pink-100 shadow-sm">
+        <div>
+          <p class="font-bold text-gray-700 mb-2 text-center">🥧 สัดส่วนรายได้ vs ต้นทุน (กราฟวงกลม)</p>
+          <div class="w-full h-48 flex justify-center"><canvas id="pieChart"></canvas></div>
+        </div>
+
+        <hr class="border-pink-100">
+
+        <div>
+          <p class="font-bold text-gray-700 mb-2 text-center">📊 เปรียบเทียบยอดขายแต่ละบัญชีแม่ (แผนภูมิแท่ง)</p>
+          <div class="w-full h-48 flex justify-center"><canvas id="barChart"></canvas></div>
+        </div>
+
+        <hr class="border-pink-100">
+
+        <div>
+          <p class="font-bold text-gray-700 mb-2 text-center">📈 แนวโน้มยอดขายรายวัน (กราฟเส้น)</p>
+          <div class="w-full h-48 flex justify-center"><canvas id="lineChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- คำแนะนำกลยุทธ์ทำกำไรสูงสุด -->
+      <div class="bg-pink-50 border border-pink-200 p-4 rounded-3xl space-y-1.5 text-gray-600">
+        <p class="font-bold text-pink-700">⭐ คำแนะนำเพื่อกำไรสูงสุด:</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>หากบัญชีแม่มีทุน 150 บาท และแบ่งเป็น 4 จอ ควรตั้งราคาขายจอละ 50 บาท (30 วัน) จะได้ยอดขายรวม 200 บาท กำไรสุทธิ 50 บาทต่อบัญชีทันที</li>
+          <li>หมั่นเช็คแท็บ "จอว่าง" เพื่อนำจอที่หมดอายุแล้วกลับมาหมุนเวียนขายใหม่ไม่ให้เสียเปล่า</li>
+        </ul>
       </div>
     </div>
 
   </div>
 
   <script>
-    let currentApp = 'netflix';
-    let accountStore = {
-      netflix: [
-        { email: 'net1@gmail.com', pass: 'Abc12345', pin: '1111', screen: 'จอ 1', expDate: '2026-06-30' },
-        { email: 'net1@gmail.com', pass: 'Abc12345', pin: '2222', screen: 'จอ 2', expDate: '2026-04-15' }
-      ],
-      youtube: [],
-      disney: [],
-      spotify: []
-    };
+    let netflixMasterStore = [
+      {
+        id: 1,
+        email: 'net.cute@gmail.com',
+        pass: '@Pink1234',
+        cost: 150,
+        totalDays: 30,
+        expDate: '2026-06-30',
+        screens: [
+          { name: 'จอ 1 (L1)', pin: '1111', status: 'active', buyerExp: '2026-06-30' },
+          { name: 'จอ 2 (L2)', pin: '2222', status: 'free', buyerExp: '' },
+          { name: 'จอ 3 (L3)', pin: '3333', status: 'free', buyerExp: '' },
+          { name: 'จอ 4 (L4)', pin: '4444', status: 'free', buyerExp: '' }
+        ]
+      }
+    ];
 
     let salesHistory = [];
     let blockCounter = 0;
     let editingIndex = -1;
+    let chartInstances = {};
 
     function initSystem() {
-      const savedStore = localStorage.getItem('multi_service_store_v3');
-      if (savedStore) accountStore = JSON.parse(savedStore);
+      const savedStore = localStorage.getItem('netflix_master_v6');
+      if (savedStore) netflixMasterStore = JSON.parse(savedStore);
 
-      const savedSales = localStorage.getItem('multi_service_sales_v1');
+      const savedSales = localStorage.getItem('netflix_sales_v6');
       if (savedSales) salesHistory = JSON.parse(savedSales);
 
-      switchApp('netflix');
-      updateSalesDashboard();
+      resetFormBlocks();
+      renderStoreTable();
+      updateProfitDashboard();
     }
 
     function saveStoreToLocal() {
-      localStorage.setItem('multi_service_store_v3', JSON.stringify(accountStore));
+      localStorage.setItem('netflix_master_v6', JSON.stringify(netflixMasterStore));
     }
 
     function saveSalesToLocal() {
-      localStorage.setItem('multi_service_sales_v1', JSON.stringify(salesHistory));
+      localStorage.setItem('netflix_sales_v6', JSON.stringify(salesHistory));
     }
 
-    // สลับหน้าจอระหว่าง ฟอร์ม กับ ยอดขาย
     function switchTab(tab) {
-      const btnForm = document.getElementById('navFormBtn');
-      const btnSales = document.getElementById('navSalesBtn');
-      const secForm = document.getElementById('sectionForm');
-      const secSales = document.getElementById('sectionSales');
-
-      if (tab === 'form') {
-        btnForm.className = "flex-1 py-2 text-xs font-semibold rounded-xl transition duration-200 bg-white text-indigo-600 shadow-sm";
-        btnSales.className = "flex-1 py-2 text-xs font-semibold rounded-xl transition duration-200 text-gray-600 hover:text-indigo-600";
-        secForm.classList.remove('hidden');
-        secSales.classList.add('hidden');
-      } else {
-        btnSales.className = "flex-1 py-2 text-xs font-semibold rounded-xl transition duration-200 bg-white text-indigo-600 shadow-sm";
-        btnForm.className = "flex-1 py-2 text-xs font-semibold rounded-xl transition duration-200 text-gray-600 hover:text-indigo-600";
-        secSales.classList.remove('hidden');
-        secForm.classList.add('hidden');
-        updateSalesDashboard();
-      }
-    }
-
-    function switchApp(app) {
-      currentApp = app;
-      ['netflix', 'youtube', 'disney', 'spotify'].forEach(a => {
-        const tab = document.getElementById(`tab-${a}`);
-        if (a === app) {
-          tab.className = "flex flex-col items-center justify-center py-2 text-xs font-semibold rounded-xl cursor-pointer bg-white text-indigo-600 shadow-sm";
-        } else {
-          tab.className = "flex flex-col items-center justify-center py-2 text-xs font-semibold rounded-xl cursor-pointer text-gray-600 hover:text-indigo-600";
-        }
+      ['form', 'store', 'calendar', 'profit'].forEach(t => {
+        document.getElementById(`section${t.charAt(0).toUpperCase() + t.slice(1)}`).classList.add('hidden');
+        document.getElementById(`nav${t.charAt(0).toUpperCase() + t.slice(1)}Btn`).className = "py-2.5 font-semibold rounded-xl transition text-gray-500 hover:text-pink-600";
       });
 
-      document.getElementById('mainTitle').textContent = `🐧 ระบบส่งงาน ${app.toUpperCase()} & สรุปยอดขาย 🍿`;
-      
-      resetFormBlocks();
-      renderStoreTable();
-      refreshDropdowns();
+      document.getElementById(`section${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.remove('hidden');
+      document.getElementById(`nav${tab.charAt(0).toUpperCase() + tab.slice(1)}Btn`).className = "py-2.5 font-semibold rounded-xl transition bg-pink-500 text-white shadow-sm";
+
+      if (tab === 'form') resetFormBlocks();
+      if (tab === 'calendar') renderScreenCalendar();
+      if (tab === 'profit') updateProfitDashboard();
     }
 
     function resetFormBlocks() {
       document.getElementById('formBlocksContainer').innerHTML = '';
       blockCounter = 0;
       addFormBlock();
-    }
-
-    function refreshDropdowns() {
-      const store = accountStore[currentApp] || [];
-      const uniqueEmails = [...new Set(store.map(acc => acc.email))];
-      
-      document.querySelectorAll('[id^="select-email-"]').forEach(select => {
-        const currentVal = select.value;
-        select.innerHTML = '<option value="">-- เลือก Email บัญชี --</option>';
-        uniqueEmails.forEach(e => {
-          const opt = document.createElement('option');
-          opt.value = e;
-          opt.textContent = e;
-          select.appendChild(opt);
-        });
-        select.value = currentVal;
-      });
     }
 
     function addFormBlock() {
@@ -347,102 +313,76 @@
 
       const blockDiv = document.createElement('div');
       blockDiv.id = `form-block-${id}`;
-      blockDiv.className = "p-3 bg-indigo-50/50 rounded-2xl border border-indigo-200 space-y-2 relative";
+      blockDiv.className = "p-3.5 bg-pink-50/40 rounded-3xl border border-pink-200 space-y-2 relative";
 
-      const store = accountStore[currentApp] || [];
-      const uniqueEmails = [...new Set(store.map(acc => acc.email))];
-      let emailOptionsHtml = '<option value="">-- เลือก Email บัญชี --</option>';
-      uniqueEmails.forEach(email => {
-        emailOptionsHtml += `<option value="${email}">${email}</option>`;
+      let slotOptionsHtml = '<option value="">-- กรุณาเลือกบัญชีและจอว่าง --</option>';
+      netflixMasterStore.forEach((acc, accIdx) => {
+        acc.screens.forEach((sc, scIdx) => {
+          const isFree = sc.status === 'free';
+          const statusBadge = isFree ? '🟢 [จอว่าง พร้อมขาย]' : '🔴 [กำลังใช้งาน]';
+          slotOptionsHtml += `<option value="${accIdx}-${scIdx}">${acc.email} ➔ ${sc.name} (PIN: ${sc.pin}) ${statusBadge}</option>`;
+        });
       });
 
       blockDiv.innerHTML = `
         <div class="flex justify-between items-center">
-          <span class="text-xs font-bold text-indigo-600 flex items-center gap-1">
-            📌 ฟอร์มที่ ${currentCount} ${isSecondary ? '<span class="text-[10px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">(ติด # อัตโนมัติ)</span>' : ''}
+          <span class="text-xs font-bold text-pink-600 flex items-center gap-1">
+            🌸 ฟอร์มที่ ${currentCount} ${isSecondary ? '<span class="text-[10px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">(ติด # อัตโนมัติ)</span>' : ''}
           </span>
           ${isSecondary ? `<button type="button" onclick="removeFormBlock(${id})" class="text-[10px] text-red-400 hover:text-red-600 font-semibold">❌ ลบฟอร์มนี้</button>` : ''}
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[10px] text-gray-500 mb-0.5">Email บัญชี</label>
-            <select id="select-email-${id}" onchange="onEmailChange(${id})" class="w-full px-2 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400">
-              ${emailOptionsHtml}
-            </select>
-          </div>
-          <div>
-            <label class="block text-[10px] text-gray-500 mb-0.5">เลือก จอ / PIN</label>
-            <select id="select-slot-${id}" onchange="onSlotChange(${id})" class="w-full px-2 py-1.5 text-xs rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400" disabled>
-              <option value="">-- เลือก Email ก่อน --</option>
-            </select>
-          </div>
+        <div>
+          <label class="block text-[10px] text-gray-400 mb-0.5">เลือกบัญชีแม่ และ จอที่ต้องการส่ง (แนะนำจอว่าง)</label>
+          <select id="select-slot-${id}" onchange="onSlotSelected(${id})" class="w-full px-2.5 py-2 text-xs rounded-xl border border-pink-200 bg-white focus:outline-none focus:ring-1 focus:ring-pink-400">
+            ${slotOptionsHtml}
+          </select>
         </div>
 
-        <div class="grid grid-cols-3 gap-2 pt-1">
+        <div class="grid grid-cols-3 gap-2 pt-1 hidden" id="slot-preview-${id}">
           <div>
             <label class="block text-[10px] text-gray-400">Pass</label>
-            <input type="text" id="pass-${id}" readonly class="w-full px-2 py-1 text-xs rounded border border-gray-200 bg-gray-50 text-gray-600">
+            <input type="text" id="pass-${id}" readonly class="w-full px-2 py-1 text-xs rounded-xl border bg-gray-50 text-gray-600">
           </div>
           <div>
             <label class="block text-[10px] text-gray-400">PIN</label>
-            <input type="text" id="pin-${id}" readonly class="w-full px-2 py-1 text-xs rounded border border-gray-200 bg-gray-50 text-center text-gray-600">
+            <input type="text" id="pin-${id}" readonly class="w-full px-2 py-1 text-xs rounded-xl border bg-gray-50 text-center text-gray-600">
           </div>
           <div>
             <label class="block text-[10px] text-gray-400">Screen</label>
-            <input type="text" id="screen-${id}" readonly class="w-full px-2 py-1 text-xs rounded border border-gray-200 bg-gray-50 text-center text-gray-600">
+            <input type="text" id="screen-${id}" readonly class="w-full px-2 py-1 text-xs rounded-xl border bg-gray-50 text-center text-gray-600">
           </div>
         </div>
+        <input type="hidden" id="hidden-acc-${id}">
+        <input type="hidden" id="hidden-sc-${id}">
       `;
 
       container.appendChild(blockDiv);
     }
 
-    function onEmailChange(id) {
-      const emailSelect = document.getElementById(`select-email-${id}`);
-      const slotSelect = document.getElementById(`select-slot-${id}`);
-      const selectedEmail = emailSelect.value;
-
-      slotSelect.innerHTML = '<option value="">-- เลือก จอ/PIN --</option>';
-      document.getElementById(`pass-${id}`).value = '';
-      document.getElementById(`pin-${id}`).value = '';
-      document.getElementById(`screen-${id}`).value = '';
-
-      if (!selectedEmail) {
-        slotSelect.disabled = true;
+    function onSlotSelected(id) {
+      const val = document.getElementById(`select-slot-${id}`).value;
+      const previewDiv = document.getElementById(`slot-preview-${id}`);
+      if (!val) {
+        previewDiv.classList.add('hidden');
         return;
       }
 
-      const store = accountStore[currentApp] || [];
-      const matchedSlots = store.filter(acc => acc.email === selectedEmail);
-      const today = new Date().toISOString().split('T')[0];
+      const [accIdx, scIdx] = val.split('-');
+      const acc = netflixMasterStore[accIdx];
+      const sc = acc.screens[scIdx];
 
-      matchedSlots.forEach((acc) => {
-        const isExpired = acc.expDate && acc.expDate < today;
-        const statusText = isExpired ? '🔴 (ว่าง/หมดอายุแล้ว)' : `🟢 (ถึง ${acc.expDate})`;
-        
-        const opt = document.createElement('option');
-        opt.value = JSON.stringify(acc);
-        opt.textContent = `จอ: ${acc.screen} | PIN: ${acc.pin} ${statusText}`;
-        slotSelect.appendChild(opt);
-      });
+      document.getElementById(`pass-${id}`).value = acc.pass;
+      document.getElementById(`pin-${id}`).value = sc.pin;
+      document.getElementById(`screen-${id}`).value = sc.name;
+      document.getElementById(`hidden-acc-${id}`).value = accIdx;
+      document.getElementById(`hidden-sc-${id}`).value = scIdx;
 
-      slotSelect.disabled = false;
-    }
-
-    function onSlotChange(id) {
-      const slotSelect = document.getElementById(`select-slot-${id}`);
-      if (!slotSelect.value) return;
-
-      const acc = JSON.parse(slotSelect.value);
-      document.getElementById(`pass-${id}`).value = acc.pass || '';
-      document.getElementById(`pin-${id}`).value = acc.pin || '';
-      document.getElementById(`screen-${id}`).value = acc.screen || '';
+      previewDiv.classList.remove('hidden');
     }
 
     function removeFormBlock(id) {
-      const block = document.getElementById(`form-block-${id}`);
-      if (block) block.remove();
+      document.getElementById(`form-block-${id}`)?.remove();
       reindexFormTitles();
     }
 
@@ -451,114 +391,121 @@
       for (let i = 0; i < blocks.length; i++) {
         const titleSpan = blocks[i].querySelector('span');
         const isSecondary = i > 0;
-        titleSpan.innerHTML = `📌 ฟอร์มที่ ${i + 1} ${isSecondary ? '<span class="text-[10px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">(ติด # อัตโนมัติ)</span>' : ''}`;
+        titleSpan.innerHTML = `🌸 ฟอร์มที่ ${i + 1} ${isSecondary ? '<span class="text-[10px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">(ติด # อัตโนมัติ)</span>' : ''}`;
       }
     }
 
-    function saveToStore() {
-      const email = document.getElementById('storeEmail').value.trim();
-      const pass = document.getElementById('storePass').value.trim();
-      const pin = document.getElementById('storePin').value.trim();
-      const screen = document.getElementById('storeScreen').value.trim();
-      const expDate = document.getElementById('storeExpDate').value;
+    function saveAccount() {
+      const email = document.getElementById('accEmail').value.trim();
+      const pass = document.getElementById('accPass').value.trim();
+      const cost = parseFloat(document.getElementById('accCost').value) || 0;
+      const totalDays = parseInt(document.getElementById('accTotalDays').value) || 30;
+      const expDate = document.getElementById('accExpDate').value;
 
-      if (!email || !screen || !pin || !expDate) {
-        alert('กรุณากรอกข้อมูล Email, ชื่อจอ, PIN และวันหมดอายุให้ครบถ้วน');
+      if (!email || !pass || !expDate) {
+        alert('กรุณากรอก Email, Pass และวันหมดอายุให้ครบถ้วนนะคะ 🧸');
         return;
       }
 
-      if (!accountStore[currentApp]) accountStore[currentApp] = [];
+      let screens = [];
+      for (let i = 1; i <= 4; i++) {
+        const sName = document.getElementById(`screen${i}`).value.trim();
+        const sPin = document.getElementById(`pin${i}`).value.trim();
+        if (sName && sPin) {
+          screens.push({ name: sName, pin: sPin, status: 'free', buyerExp: '' });
+        }
+      }
+
+      if (screens.length === 0) {
+        alert('กรุณากำหนดชื่อจอและ PIN อย่างน้อย 1 จอนะคะ 🌸');
+        return;
+      }
 
       if (editingIndex >= 0) {
-        accountStore[currentApp][editingIndex] = { email, pass, pin, screen, expDate };
-        alert('อัปเดตข้อมูลจอเรียบร้อยแล้ว!');
+        screens.forEach((sc, idx) => {
+          if (netflixMasterStore[editingIndex].screens[idx]) {
+            sc.status = netflixMasterStore[editingIndex].screens[idx].status;
+          }
+        });
+        netflixMasterStore[editingIndex] = { id: netflixMasterStore[editingIndex].id, email, pass, cost, totalDays, expDate, screens };
+        alert('แก้ไขบัญชีแม่เรียบร้อยแล้วค่ะ! ✨');
       } else {
-        accountStore[currentApp].push({ email, pass, pin, screen, expDate });
-        alert('บันทึกจอเข้าคลังเรียบร้อยแล้ว!');
+        netflixMasterStore.push({ id: Date.now(), email, pass, cost, totalDays, expDate, screens });
+        alert('บันทึกบัญชีแม่เข้าคลังเรียบร้อยแล้วค่ะ! 🌸');
       }
 
       saveStoreToLocal();
-      refreshDropdowns();
       renderStoreTable();
-      cancelEditMode();
-    }
-
-    function toggleStoreTable() {
-      document.getElementById('storeTableWrapper').classList.toggle('hidden');
+      cancelAccountEdit();
     }
 
     function renderStoreTable() {
       const tbody = document.getElementById('storeTableBody');
       tbody.innerHTML = '';
-      const store = accountStore[currentApp] || [];
 
-      if (store.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-2 text-gray-400">ยังไม่มีข้อมูลในคลังของแอปนี้</td></tr>';
+      if (netflixMasterStore.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-gray-400">ยังไม่มีบัญชีในระบบ</td></tr>';
         return;
       }
 
-      const today = new Date().toISOString().split('T')[0];
-
-      store.forEach((acc, idx) => {
-        const isExpired = acc.expDate && acc.expDate < today;
-        const statusBadge = isExpired 
-          ? '<span class="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[10px] font-semibold">🔴 ว่าง (หมดอายุ)</span>'
-          : '<span class="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">🟢 กำลังใช้งาน</span>';
-
+      netflixMasterStore.forEach((acc, idx) => {
         const tr = document.createElement('tr');
-        tr.className = "border-b border-gray-100 text-gray-700 hover:bg-indigo-50/50";
+        tr.className = "border-b border-pink-50 text-gray-600";
         tr.innerHTML = `
-          <td class="py-1.5 truncate max-w-[100px]">${acc.email}<br><span class="font-bold text-indigo-600">${acc.screen}</span></td>
-          <td class="py-1.5 text-center">${acc.pin}</td>
-          <td class="py-1.5 text-center text-[10px]">${acc.expDate}</td>
-          <td class="py-1.5 text-center">${statusBadge}</td>
-          <td class="py-1.5 text-right space-x-1">
-            <button type="button" onclick="editStoreItem(${idx})" class="text-[10px] bg-amber-100 hover:bg-amber-200 text-amber-800 px-1 py-0.5 rounded font-medium">แก้ไข</button>
-            <button type="button" onclick="deleteStoreItem(${idx})" class="text-[10px] bg-red-100 hover:bg-red-200 text-red-600 px-1 py-0.5 rounded font-medium">ลบ</button>
+          <td class="py-2 truncate max-w-[120px] font-semibold text-pink-600">${acc.email}<br><span class="text-[10px] text-gray-400 font-normal">ทุน: ${acc.cost}฿</span></td>
+          <td class="py-2 text-center">${acc.screens.length} จอ</td>
+          <td class="py-2 text-center text-[10px]">${acc.expDate}</td>
+          <td class="py-2 text-right space-x-1">
+            <button type="button" onclick="editAccount(${idx})" class="text-[10px] bg-pink-100 text-pink-700 px-1.5 py-0.5 rounded-lg">แก้ไข</button>
+            <button type="button" onclick="deleteAccount(${idx})" class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-lg">ลบ</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function editStoreItem(index) {
+    function editAccount(index) {
       editingIndex = index;
-      const item = accountStore[currentApp][index];
+      const acc = netflixMasterStore[index];
 
-      document.getElementById('storeEmail').value = item.email;
-      document.getElementById('storePass').value = item.pass || '';
-      document.getElementById('storeScreen').value = item.screen;
-      document.getElementById('storePin').value = item.pin;
-      document.getElementById('storeExpDate').value = item.expDate || '';
+      document.getElementById('accEmail').value = acc.email;
+      document.getElementById('accPass').value = acc.pass;
+      document.getElementById('accCost').value = acc.cost;
+      document.getElementById('accTotalDays').value = acc.totalDays;
+      document.getElementById('accExpDate').value = acc.expDate;
 
-      const btnSave = document.getElementById('btnSaveStore');
-      btnSave.textContent = '💾 บันทึกการแก้ไข';
-      btnSave.className = "flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-xl transition shadow";
-      document.getElementById('btnCancelEdit').classList.remove('hidden');
-      document.getElementById('storeEmail').focus();
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById(`screen${i}`).value = acc.screens[i-1] ? acc.screens[i-1].name : '';
+        document.getElementById(`pin${i}`).value = acc.screens[i-1] ? acc.screens[i-1].pin : '';
+      }
+
+      document.getElementById('storeFormTitle').textContent = '🧸 แก้ไขข้อมูลบัญชีแม่';
+      document.getElementById('btnSaveAcc').textContent = '💾 บันทึกการแก้ไข';
+      document.getElementById('btnCancelAcc').classList.remove('hidden');
     }
 
-    function cancelEditMode() {
+    function cancelAccountEdit() {
       editingIndex = -1;
-      document.getElementById('storeEmail').value = '';
-      document.getElementById('storePass').value = '';
-      document.getElementById('storeScreen').value = '';
-      document.getElementById('storePin').value = '';
-      document.getElementById('storeExpDate').value = '';
-
-      const btnSave = document.getElementById('btnSaveStore');
-      btnSave.textContent = '💾 บันทึก / อัปเดตข้อมูลจอ';
-      btnSave.className = "flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-xl transition shadow";
-      document.getElementById('btnCancelEdit').classList.add('hidden');
+      document.getElementById('accEmail').value = '';
+      document.getElementById('accPass').value = '';
+      document.getElementById('accCost').value = '';
+      document.getElementById('accTotalDays').value = '30';
+      document.getElementById('accExpDate').value = '';
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById(`screen${i}`).value = '';
+        document.getElementById(`pin${i}`).value = '';
+      }
+      document.getElementById('storeFormTitle').textContent = '🌸 เพิ่มบัญชีแม่และกำหนดจอ';
+      document.getElementById('btnSaveAcc').textContent = '💾 บันทึกบัญชีแม่เข้าคลัง';
+      document.getElementById('btnCancelAcc').classList.add('hidden');
     }
 
-    function deleteStoreItem(index) {
-      if (confirm(`ต้องการลบรายการนี้ออกจากคลังใช่ไหม?`)) {
-        accountStore[currentApp].splice(index, 1);
+    function deleteAccount(index) {
+      if (confirm('ต้องการลบบัญชีนี้ออกจากคลังใช่ไหมคะ?')) {
+        netflixMasterStore.splice(index, 1);
         saveStoreToLocal();
-        refreshDropdowns();
         renderStoreTable();
-        if (editingIndex === index) cancelEditMode();
+        if (editingIndex === index) cancelAccountEdit();
       }
     }
 
@@ -566,16 +513,13 @@
       const daysAdd = parseInt(document.getElementById('daysSelect').value);
       const targetDate = new Date();
       targetDate.setDate(targetDate.getDate() + daysAdd);
-
       const day = String(targetDate.getDate()).padStart(2, '0');
       const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-
-      document.getElementById('expDate').value = `${day} / ${month} - 22.00 น.`;
+      document.getElementById('expDate').value = `${day} / ${month} - 22:00 น.`;
     }
 
     function generateText(event) {
       event.preventDefault();
-
       const device = document.querySelector('input[name="device"]:checked').value;
       const daysVal = document.getElementById('daysSelect').value;
       const daysText = String(daysVal).padStart(2, '0') + " days";
@@ -588,23 +532,25 @@
 
       for (let i = 0; i < blocks.length; i++) {
         const block = blocks[i];
-        const emailSelect = block.querySelector('[id^="select-email-"]');
-        const email = emailSelect.value;
-        const pass = block.querySelector('.grid input[id^="pass-"]').value;
-        const pin = block.querySelector('.grid input[id^="pin-"]').value;
-        const screen = block.querySelector('.grid input[id^="screen-"]').value;
+        const accIdx = block.querySelector('[id^="hidden-acc-"]').value;
+        const scIdx = block.querySelector('[id^="hidden-sc-"]').value;
 
-        if (!email || !pin) continue;
+        if (accIdx === "" || scIdx === "") continue;
+
+        const acc = netflixMasterStore[accIdx];
+        const sc = acc.screens[scIdx];
+
+        sc.status = 'busy';
+        sc.buyerExp = expDate;
 
         const headerPrefix = (i === 0) ? "" : "#";
+        const singleFormTemplate = `${headerPrefix}🌸♡     NETFLIX 4K  ${daysText}  ❨ ${device}❩ 🧸
+                  exp 𓈒 ${expDate} 🍓
 
-        const singleFormTemplate = `${headerPrefix}🐧♡     ${currentApp.toUpperCase()}  ${daysText}  ❨ ${device}❩ ㅉ
-                  exp 𓈒 ${expDate} 🍊
-
-    mail 𓈒${email}
-    Pass  𓈒${pass}
+    mail 𓈒${acc.email}
+    Pass  𓈒${acc.pass}
                          pin         screen 
-                       ${pin}          ${screen}
+                       ${sc.pin}          ${sc.name}
           ᡗ𓏽 . . 𓏽つ
     กรุณาอ่านกฎก่อน𓈒เข้าใช้
  ୨୧ ｡        ผิดกฎปรับ 500 บาททุกกรณี ‼️
@@ -623,96 +569,164 @@
 
     🌸 ” มีประกัน เคลมไวดูแลตลอดอายุการใช้งาน “ 🌸
 
-𓈒   รับชมให้สนุกนะคะ 🐠
+𓈒   รับชมให้สนุกนะคะ 🐰
 แอคมีปัญหาทักได้เลยค่ะ      ♡ 𓈒`;
 
         fullOutput.push(singleFormTemplate);
 
-        // บันทึกประวัติการขายต่อ 1 ฟอร์มที่สร้าง
         const now = new Date();
-        const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        const dateStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}`;
         
-        salesHistory.unshift({
+        salesHistory.push({
           id: Date.now() + i,
-          app: currentApp.toUpperCase(),
-          detail: `${email.split('@')[0]} (${screen})`,
+          email: acc.email,
+          screen: sc.name,
           price: salePrice,
-          time: timeStr
+          cost: acc.cost / acc.screens.length,
+          date: dateStr
         });
         newSalesCount++;
       }
 
       if (fullOutput.length === 0) {
-        alert('กรุณาเลือก Email และ จอ/PIN อย่างน้อย 1 ฟอร์มก่อนกดสร้างข้อความ');
+        alert('กรุณาเลือกบัญชีและจออย่างน้อย 1 ฟอร์มก่อนกดสร้างข้อความนะคะ 🧸');
         return;
       }
 
+      saveStoreToLocal();
       saveSalesToLocal();
-      updateSalesDashboard();
+      updateProfitDashboard();
 
       const finalText = fullOutput.join("\n\n");
       document.getElementById('output').value = finalText;
-
       navigator.clipboard.writeText(finalText).then(() => {
-        alert(`สร้างข้อความและบันทึกยอดขาย ${newSalesCount} รายการเรียบร้อยแล้ว!`);
-      }).catch(() => {
-        alert('สร้างข้อความและบันทึกยอดขายเรียบร้อย!');
+        alert(`สร้างข้อความและบันทึกยอดขาย ${newSalesCount} รายการเรียบร้อยแล้วค่ะ! 🌸`);
       });
     }
 
-    // อัปเดตข้อมูลบนหน้า Dashboard สรุปยอดขาย
-    function updateSalesDashboard() {
-      let totalRev = 0;
-      let revs = { NETFLIX: 0, YOUTUBE: 0, DISNEY: 0, SPOTIFY: 0 };
+    function renderScreenCalendar() {
+      const container = document.getElementById('calendarContainer');
+      container.innerHTML = '';
 
-      salesHistory.forEach(item => {
-        totalRev += item.price;
-        if (revs[item.app] !== undefined) {
-          revs[item.app] += item.price;
-        }
-      });
-
-      document.getElementById('totalRevenue').textContent = `${totalRev.toLocaleString()} บาท`;
-      document.getElementById('totalOrders').textContent = `${salesHistory.length} รายการ`;
-
-      document.getElementById('revNetflix').textContent = `${revs.NETFLIX.toLocaleString()} ฿`;
-      document.getElementById('revYoutube').textContent = `${revs.YOUTUBE.toLocaleString()} ฿`;
-      document.getElementById('revDisney').textContent = `${revs.DISNEY.toLocaleString()} ฿`;
-      document.getElementById('revSpotify').textContent = `${revs.SPOTIFY.toLocaleString()} ฿`;
-
-      const tbody = document.getElementById('salesTableBody');
-      tbody.innerHTML = '';
-
-      if (salesHistory.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">ยังไม่มีประวัติการขาย</td></tr>';
+      if (netflixMasterStore.length === 0) {
+        container.innerHTML = '<div class="text-center py-6 text-gray-400 text-xs">ยังไม่มีบัญชีในระบบ</div>';
         return;
       }
 
-      salesHistory.forEach((item, index) => {
-        const tr = document.createElement('tr');
-        tr.className = "border-b border-gray-100 hover:bg-gray-50";
-        tr.innerHTML = `
-          <td class="py-2 text-[10px] text-gray-500">${item.time}<br><span class="font-bold text-indigo-600">${item.app}</span></td>
-          <td class="py-2 text-gray-700 font-medium">${item.detail}</td>
-          <td class="py-2 text-right font-bold text-emerald-600">+${item.price} ฿</td>
-          <td class="py-2 text-right"><button onclick="deleteSaleItem(${item.id})" class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded">ลบ</button></td>
-        `;
-        tbody.appendChild(tr);
+      netflixMasterStore.forEach(acc => {
+        acc.screens.forEach(sc => {
+          const isFree = sc.status === 'free';
+          const statusBg = isFree ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-pink-50 border-pink-200 text-pink-700';
+          const statusText = isFree ? '🟢 สถานะ: จอว่างพร้อมขายทันที' : `🔴 สถานะ: ใช้งานอยู่ (หมดอายุ: ${sc.buyerExp})`;
+
+          const card = document.createElement('div');
+          card.className = `p-3.5 rounded-3xl border ${statusBg} text-xs flex justify-between items-center`;
+          card.innerHTML = `
+            <div>
+              <span class="font-bold text-pink-600">[NETFLIX]</span> 
+              <span class="font-semibold text-gray-700">${acc.email}</span><br>
+              <span class="text-gray-600">จอ: <b>${sc.name}</b> | PIN: <b>${sc.pin}</b></span><br>
+              <span class="text-[11px] font-medium">${statusText}</span>
+            </div>
+            <div>
+              <button onclick="toggleSlotStatus('${acc.email}', '${sc.name}')" class="px-3 py-1 rounded-2xl text-[11px] font-bold ${isFree ? 'bg-emerald-500 text-white' : 'bg-pink-500 text-white'}">
+                ${isFree ? 'ว่าง' : 'เคลียร์เป็นว่าง'}
+              </button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
       });
     }
 
-    function deleteSaleItem(id) {
-      salesHistory = salesHistory.filter(item => item.id !== id);
-      saveSalesToLocal();
-      updateSalesDashboard();
+    function toggleSlotStatus(email, screenName) {
+      netflixMasterStore.forEach(acc => {
+        if (acc.email === email) {
+          acc.screens.forEach(sc => {
+            if (sc.name === screenName) {
+              sc.status = sc.status === 'free' ? 'busy' : 'free';
+              if (sc.status === 'free') sc.buyerExp = '';
+            }
+          });
+        }
+      });
+      saveStoreToLocal();
+      renderScreenCalendar();
     }
 
-    function clearSalesHistory() {
-      if (confirm('คุณต้องการลบประวัติการขายทั้งหมดใช่หรือไม่?')) {
-        salesHistory = [];
-        saveSalesToLocal();
-        updateSalesDashboard();
-      }
+    function updateProfitDashboard() {
+      let totalRev = 0;
+      let totalCost = 0;
+
+      salesHistory.forEach(item => {
+        totalRev += item.price;
+        totalCost += item.cost || 0;
+      });
+
+      let netProfit = totalRev - totalCost;
+
+      document.getElementById('totalRev').textContent = `${totalRev.toLocaleString()} บาท`;
+      document.getElementById('totalProfit').textContent = `${netProfit.toLocaleString()} บาท`;
+
+      renderCharts(totalRev, totalCost);
+    }
+
+    function renderCharts(rev, cost) {
+      if (chartInstances.pie) chartInstances.pie.destroy();
+      const ctxPie = document.getElementById('pieChart').getContext('2d');
+      chartInstances.pie = new Chart(ctxPie, {
+        type: 'pie',
+        data: {
+          labels: ['ยอดขายรวม', 'ต้นทุนรวม'],
+          datasets: [{
+            data: [rev || 1, cost || 1],
+            backgroundColor: ['#f472b6', '#a7f3d0']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      let accSales = {};
+      salesHistory.forEach(s => {
+        accSales[s.email] = (accSales[s.email] || 0) + s.price;
+      });
+
+      if (chartInstances.bar) chartInstances.bar.destroy();
+      const ctxBar = document.getElementById('barChart').getContext('2d');
+      chartInstances.bar = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(accSales).length > 0 ? Object.keys(accSales) : ['ยังไม่มีข้อมูล'],
+          datasets: [{
+            label: 'ยอดขาย (บาท)',
+            data: Object.keys(accSales).length > 0 ? Object.values(accSales) : [0],
+            backgroundColor: '#ec4899'
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      let dateSales = {};
+      salesHistory.forEach(s => {
+        dateSales[s.date] = (dateSales[s.date] || 0) + s.price;
+      });
+
+      if (chartInstances.line) chartInstances.line.destroy();
+      const ctxLine = document.getElementById('lineChart').getContext('2d');
+      chartInstances.line = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: Object.keys(dateSales).length > 0 ? Object.keys(dateSales) : ['วันนี้'],
+          datasets: [{
+            label: 'ยอดขาย (บาท)',
+            data: Object.keys(dateSales).length > 0 ? Object.values(dateSales) : [0],
+            borderColor: '#db2777',
+            tension: 0.3,
+            fill: false
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
     }
 
     initSystem();
