@@ -1,35 +1,63 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🌸 ระบบจัดการ Netflix 4K & กราฟวิเคราะห์กำไร 🧸</title>
+  <title>🌸 ระบบจัดการ Netflix 4K ละมุนนี & กราฟวิเคราะห์กำไร 🧸</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- โหลด Chart.js สำหรับวาดกราฟ -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Kanit', sans-serif; background-color: #fff5f7; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #fff1f2; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #fbcfe8; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #f472b6; }
   </style>
 </head>
 <body class="min-h-screen p-3 sm:p-6 flex items-center justify-center">
 
+  <!-- กล่องแจ้งเตือนแบบน่ารัก -->
+  <div id="toastBox" class="fixed top-5 right-5 z-50 hidden transform transition-all duration-300 translate-y-[-20px] opacity-0">
+    <div class="bg-pink-500 text-white px-4 py-3 rounded-2xl shadow-lg flex items-center gap-2 text-xs font-medium border-2 border-pink-200">
+      <span id="toastIcon">🌸</span>
+      <span id="toastMsg">แจ้งเตือน</span>
+    </div>
+  </div>
+
+  <!-- หน้าต่างยืนยัน -->
+  <div id="confirmModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl border-2 border-pink-100 text-center space-y-4">
+      <div class="text-3xl">🧸</div>
+      <p id="confirmMsg" class="text-xs text-gray-700 font-medium">ต้องการทำรายการนี้ใช่ไหมคะ?</p>
+      <div class="flex gap-2">
+        <button type="button" id="confirmNoBtn" class="flex-1 py-2 rounded-xl bg-gray-100 text-gray-600 text-xs font-semibold hover:bg-gray-200">ยกเลิก</button>
+        <button type="button" id="confirmYesBtn" class="flex-1 py-2 rounded-xl bg-pink-500 text-white text-xs font-semibold hover:bg-pink-600 shadow">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+
   <div class="bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-xl w-full max-w-2xl p-5 sm:p-8 border-2 border-pink-100">
+    <!-- Header -->
     <div class="text-center mb-5">
-      <h1 class="text-xl sm:text-2xl font-bold text-pink-600">🌸 ระบบจัดการ Netflix ละมุนนี & กราฟกำไร 🧸🍿</h1>
-      <p class="text-xs text-gray-400 mt-1">แยกบัญชีแม่ชัดเจน ➔ กรองจอว่างอัตโนมัติ ➔ กราฟสถิติจจัดเต็ม</p>
+      <h1 class="text-xl sm:text-2xl font-bold text-pink-600">🌸 ระบบจัดการ Netflix 4K ละมุนนี 🧸🍿</h1>
+      <p class="text-xs text-gray-400 mt-1">ครบ 5 จอ ➔ ฟิกจอทีวี ➔ คำนวณราคาขายอัตโนมัติ ➔ ปรับฟอร์มได้ตามใจ</p>
     </div>
 
     <!-- เมนูหลักสลับหน้า (Tabs) -->
-    <div class="mb-5 bg-pink-50 p-1.5 rounded-2xl grid grid-cols-4 gap-1 text-[11px] sm:text-xs">
+    <div class="mb-5 bg-pink-50 p-1.5 rounded-2xl grid grid-cols-5 gap-1 text-[10px] sm:text-xs">
       <button type="button" id="navFormBtn" onclick="switchTab('form')" class="py-2.5 font-semibold rounded-xl transition bg-pink-500 text-white shadow-sm">
         💌 ส่งฟอร์ม
       </button>
       <button type="button" id="navStoreBtn" onclick="switchTab('store')" class="py-2.5 font-semibold rounded-xl transition text-gray-500 hover:text-pink-600">
-        📦 คลังบัญชี
+        📦 คลัง 5 จอ
       </button>
       <button type="button" id="navCalendarBtn" onclick="switchTab('calendar')" class="py-2.5 font-semibold rounded-xl transition text-gray-500 hover:text-pink-600">
         📅 จอว่าง
+      </button>
+      <button type="button" id="navTemplateBtn" onclick="switchTab('template')" class="py-2.5 font-semibold rounded-xl transition text-gray-500 hover:text-pink-600">
+        ✏️ ปรับฟอร์ม
       </button>
       <button type="button" id="navProfitBtn" onclick="switchTab('profit')" class="py-2.5 font-semibold rounded-xl transition text-gray-500 hover:text-pink-600">
         📊 กราฟกำไร
@@ -38,33 +66,56 @@
 
     <!-- ================= TAB 1: ฟอร์มส่งงาน ================= -->
     <div id="sectionForm" class="space-y-4">
-      <div class="bg-pink-50/60 p-3 rounded-2xl border border-pink-200 text-xs text-pink-700 flex justify-between items-center gap-2">
-        <span>✨ ระบบเลือกจอว่างให้อัตโนมัติ ป้องกันการขายซ้ำ!</span>
-        <button type="button" onclick="switchTab('store')" class="bg-pink-500 text-white px-2.5 py-1 rounded-xl text-[10px] font-bold shrink-0">➕ เพิ่มบัญชีใหม่</button>
-      </div>
+      <!-- แถบตารางราคาอ้างอิงแบบย่อ -->
+      <details class="bg-pink-50/70 rounded-2xl border border-pink-200 p-3 text-xs">
+        <summary class="font-bold text-pink-700 cursor-pointer flex justify-between items-center select-none">
+          <span>☘️ ดูตารางราคาขายตัวแทน (มือถือ vs ทีวี)</span>
+          <span class="text-[10px] text-pink-400 font-normal">(กดเปิด/ปิด)</span>
+        </summary>
+        <div class="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] bg-white p-3 rounded-xl border border-pink-100">
+          <div>
+            <p class="font-bold text-pink-600 mb-1">꒰𓈒 มือถือ ไอแพด แท็บเล็ต คอม 𓈒꒱</p>
+            <div class="grid grid-cols-2 gap-x-2 text-gray-600 font-mono">
+              <span>01 วัน : 05 บาท</span><span>07 วัน : 23 บาท</span>
+              <span>02 วัน : 08 บาท</span><span>08 วัน : 26 บาท</span>
+              <span>03 วัน : 11 บาท</span><span>09 วัน : 29 บาท</span>
+              <span>04 วัน : 14 บาท</span><span>10 วัน : 32 บาท</span>
+              <span>05 วัน : 17 บาท</span><span>30 วัน : 85 บาท</span>
+              <span>06 วัน : 20 บาท</span>
+            </div>
+          </div>
+          <div class="border-t sm:border-t-0 sm:border-l border-pink-100 pt-2 sm:pt-0 sm:pl-2">
+            <p class="font-bold text-purple-600 mb-1">꒰𓈒 ทีวี โปรเจคเตอร์ ทุกอุปกรณ์ 𓈒꒱</p>
+            <div class="grid grid-cols-2 gap-x-2 text-gray-600 font-mono">
+              <span>01 วัน : 10 บาท</span><span>07 วัน : 32 บาท</span>
+              <span>02 วัน : 13 บาท</span><span>08 วัน : 36 บาท</span>
+              <span>03 วัน : 17 บาท</span><span>09 วัน : 40 บาท</span>
+              <span>04 วัน : 21 บาท</span><span>10 วัน : 44 บาท</span>
+              <span>05 วัน : 25 บาท</span><span>30 วัน : 105 บาท</span>
+              <span>06 วัน : 28 บาท</span>
+            </div>
+          </div>
+        </div>
+      </details>
 
       <form id="serviceForm" onsubmit="generateText(event)" class="space-y-3">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">เลือกอุปกรณ์</label>
+            <label class="block text-xs font-medium text-gray-600 mb-1">1. เลือกอุปกรณ์ (ระบบกรองจอให้ตรงประเภท)</label>
             <div class="grid grid-cols-2 gap-1 bg-pink-50 p-1 rounded-2xl">
               <label class="flex items-center justify-center py-2 text-xs font-medium rounded-xl cursor-pointer has-[:checked]:bg-white has-[:checked]:text-pink-600 has-[:checked]:shadow-sm">
-                <input type="radio" name="device" value="มือถือ" checked class="hidden"> 📱 มือถือ
+                <input type="radio" name="device" value="มือถือ" checked onchange="onDeviceOrDaysChange()" class="hidden"> 📱 มือถือ/คอม
               </label>
-              <label class="flex items-center justify-center py-2 text-xs font-medium rounded-xl cursor-pointer has-[:checked]:bg-white has-[:checked]:text-pink-600 has-[:checked]:shadow-sm">
-                <input type="radio" name="device" value="ทีวี" class="hidden"> 📺 ทีวี
+              <label class="flex items-center justify-center py-2 text-xs font-medium rounded-xl cursor-pointer has-[:checked]:bg-white has-[:checked]:text-purple-600 has-[:checked]:shadow-sm">
+                <input type="radio" name="device" value="ทีวี" onchange="onDeviceOrDaysChange()" class="hidden"> 📺 ทีวี (จอฟิก)
               </label>
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">ระยะเวลาที่ลูกค้าซื้อ</label>
-            <select id="daysSelect" onchange="calculateExpDate()" class="w-full px-3 py-2 text-xs rounded-2xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-300 bg-white">
-              <option value="1">01 วัน</option>
-              <option value="3">03 วัน</option>
-              <option value="7">07 วัน (1 สัปดาห์)</option>
-              <option value="15">15 วัน</option>
-              <option value="30" selected>30 วัน (คุ้มสุดๆ 🔥)</option>
+            <label class="block text-xs font-medium text-gray-600 mb-1">2. ระยะเวลาที่ลูกค้าซื้อ (1 - 30 วัน)</label>
+            <select id="daysSelect" onchange="onDeviceOrDaysChange()" class="w-full px-3 py-2 text-xs rounded-2xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-300 bg-white">
+              <!-- ตัวเลือก 1-30 วันจะถูกสร้างด้วย JS -->
             </select>
           </div>
         </div>
@@ -75,15 +126,15 @@
             <input type="text" id="expDate" readonly class="w-full px-3 py-2 text-xs font-semibold text-center rounded-2xl border border-pink-100 bg-pink-50/50 text-gray-600">
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">ราคาขาย (บาท)</label>
-            <input type="number" id="salePrice" value="65" min="0" step="any" class="w-full px-3 py-2 text-xs font-semibold text-center rounded-2xl border border-pink-200 bg-white focus:outline-none focus:ring-2 focus:ring-pink-300">
+            <label class="block text-xs font-medium text-gray-600 mb-1">ราคาขายอัตโนมัติ (บาท)</label>
+            <input type="number" id="salePrice" value="85" class="w-full px-3 py-2 text-xs font-bold text-center rounded-2xl border border-pink-200 bg-white text-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-300">
           </div>
         </div>
 
         <!-- รายการฟอร์มหลายจอ -->
         <div>
           <div class="flex justify-between items-center mb-1.5">
-            <label class="block text-xs font-medium text-gray-600">รายการฟอร์มที่ต้องการส่ง:</label>
+            <label class="block text-xs font-medium text-gray-600">3. เลือกบัญชีและจอว่างที่ต้องการส่ง:</label>
             <button type="button" onclick="addFormBlock()" class="text-xs bg-pink-500 hover:bg-pink-600 text-white font-semibold px-3.5 py-1.5 rounded-xl shadow transition">
               ➕ เพิ่มฟอร์มถัดไป
             </button>
@@ -93,25 +144,28 @@
         </div>
 
         <button type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 rounded-2xl transition text-sm shadow-md mt-2">
-          ✨ สร้างข้อความรวม & บันทึกยอดขาย
+          ✨ สร้างข้อความรวม, บันทึกยอดขาย & คัดลอก
         </button>
       </form>
 
       <!-- พรีวิวข้อความ -->
       <div class="mt-4">
-        <label class="block text-xs font-medium text-gray-400 mb-1">ตัวอย่างข้อความพร้อมส่ง:</label>
-        <textarea id="output" rows="10" readonly class="w-full p-3 text-xs bg-pink-50/30 border border-pink-200 rounded-2xl font-mono whitespace-pre-wrap break-words text-gray-600 focus:outline-none"></textarea>
+        <div class="flex justify-between items-center mb-1">
+          <label class="block text-xs font-medium text-gray-400">ตัวอย่างข้อความพร้อมส่ง:</label>
+          <button type="button" onclick="copyOutputOnly()" class="text-[11px] text-pink-600 hover:underline font-medium">📋 คัดลอกอีกครั้ง</button>
+        </div>
+        <textarea id="output" rows="12" readonly class="w-full p-3 text-xs bg-pink-50/30 border border-pink-200 rounded-2xl font-mono whitespace-pre text-gray-600 focus:outline-none"></textarea>
       </div>
     </div>
 
-    <!-- ================= TAB 2: คลังบัญชีแม่ & จอ ================= -->
+    <!-- ================= TAB 2: คลังบัญชีแม่ & จอ (5 จอ + ฟิกทีวี) ================= -->
     <div id="sectionStore" class="hidden space-y-4">
       <div class="bg-pink-50/70 p-4 rounded-3xl border border-pink-200 space-y-3">
-        <h2 class="text-xs font-bold text-pink-700" id="storeFormTitle">🌸 เพิ่มบัญชีแม่และกำหนดจอ</h2>
+        <h2 class="text-xs font-bold text-pink-700" id="storeFormTitle">🌸 เพิ่มบัญชีแม่ (ครบ 5 จอ + ฟิก 1 จอสำหรับทีวี)</h2>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
           <div>
-            <label class="block text-gray-500 mb-0.5">Email บัญชีแม่</label>
+            <label class="block text-gray-500 mb-0.5">อีเมลบัญชีแม่</label>
             <input type="email" id="accEmail" placeholder="netflix@gmail.com" class="w-full p-2.5 rounded-xl border border-pink-200 bg-white">
           </div>
           <div>
@@ -123,30 +177,69 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
           <div>
             <label class="block text-gray-500 mb-0.5">ต้นทุนซื้อมา (บาท)</label>
-            <input type="number" id="accCost" placeholder="150" min="0" step="any" class="w-full p-2.5 rounded-xl border border-pink-200 text-center bg-white font-bold text-pink-600">
+            <input type="number" id="accCost" placeholder="180" class="w-full p-2.5 rounded-xl border border-pink-200 text-center bg-white font-bold text-pink-600">
           </div>
           <div>
             <label class="block text-gray-500 mb-0.5">จำนวนวันทั้งหมด</label>
-            <input type="number" id="accTotalDays" value="30" min="1" class="w-full p-2.5 rounded-xl border border-pink-200 text-center bg-white">
+            <input type="number" id="accTotalDays" value="30" class="w-full p-2.5 rounded-xl border border-pink-200 text-center bg-white">
           </div>
           <div>
-            <label class="block text-gray-500 mb-0.5">วันหมดอายุบัญชี</label>
+            <label class="block text-gray-500 mb-0.5">วันหมดอายุบัญชีแม่</label>
             <input type="date" id="accExpDate" class="w-full p-2 rounded-xl border border-pink-200 text-center bg-white text-[11px]">
           </div>
         </div>
 
-        <!-- ส่วนกำหนดจอ 1 ถึง 4 และ PIN -->
-        <div class="border-t border-pink-200/60 pt-2 text-xs space-y-2">
-          <label class="block font-bold text-pink-700">🖥️ กำหนดรายชื่อจอและ PIN (เช่น จอ 1 ถึง 4):</label>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div><input type="text" id="screen1" placeholder="จอ 1 (เช่น L1)" class="w-full p-2 rounded-lg border text-center bg-white"></div>
-            <div><input type="text" id="pin1" placeholder="PIN 1" class="w-full p-2 rounded-lg border text-center bg-white"></div>
-            <div><input type="text" id="screen2" placeholder="จอ 2 (เช่น L2)" class="w-full p-2 rounded-lg border text-center bg-white"></div>
-            <div><input type="text" id="pin2" placeholder="PIN 2" class="w-full p-2 rounded-lg border text-center bg-white"></div>
-            <div><input type="text" id="screen3" placeholder="จอ 3 (เช่น L3)" class="w-full p-2 rounded-lg border text-center bg-white"></div>
-            <div><input type="text" id="pin3" placeholder="PIN 3" class="w-full p-2 rounded-lg border text-center bg-white"></div>
-            <div><input type="text" id="screen4" placeholder="จอ 4 (เช่น L4)" class="w-full p-2 rounded-lg border text-center bg-white"></div>
-            <div><input type="text" id="pin4" placeholder="PIN 4" class="w-full p-2 rounded-lg border text-center bg-white"></div>
+        <!-- ส่วนกำหนดจอ 1 ถึง 5 และเลือกฟิกจอทีวี -->
+        <div class="border-t border-pink-200/60 pt-2.5 text-xs space-y-2">
+          <div class="flex justify-between items-center">
+            <label class="font-bold text-pink-700">🖥️ กำหนดทั้ง 5 จอ และเลือกฟิก 1 จอสำหรับทีวี:</label>
+          </div>
+          
+          <div class="space-y-2" id="fiveScreensInputs">
+            <div class="grid grid-cols-12 gap-1.5 items-center bg-white p-1.5 rounded-xl border border-pink-100">
+              <span class="col-span-2 text-center font-bold text-pink-500 text-[11px]">จอ 1</span>
+              <input type="text" id="screen1" placeholder="ชื่อจอ (เช่น L1)" class="col-span-4 p-1.5 rounded-lg border text-center">
+              <input type="text" id="pin1" placeholder="PIN (1111)" class="col-span-3 p-1.5 rounded-lg border text-center">
+              <label class="col-span-3 flex items-center justify-center gap-1 text-[10px] font-semibold text-purple-600 cursor-pointer bg-purple-50 py-1.5 rounded-lg">
+                <input type="radio" name="tvScreenIndex" value="0"> 📺 ฟิกทีวี
+              </label>
+            </div>
+
+            <div class="grid grid-cols-12 gap-1.5 items-center bg-white p-1.5 rounded-xl border border-pink-100">
+              <span class="col-span-2 text-center font-bold text-pink-500 text-[11px]">จอ 2</span>
+              <input type="text" id="screen2" placeholder="ชื่อจอ (เช่น L2)" class="col-span-4 p-1.5 rounded-lg border text-center">
+              <input type="text" id="pin2" placeholder="PIN (2222)" class="col-span-3 p-1.5 rounded-lg border text-center">
+              <label class="col-span-3 flex items-center justify-center gap-1 text-[10px] font-semibold text-purple-600 cursor-pointer bg-purple-50 py-1.5 rounded-lg">
+                <input type="radio" name="tvScreenIndex" value="1"> 📺 ฟิกทีวี
+              </label>
+            </div>
+
+            <div class="grid grid-cols-12 gap-1.5 items-center bg-white p-1.5 rounded-xl border border-pink-100">
+              <span class="col-span-2 text-center font-bold text-pink-500 text-[11px]">จอ 3</span>
+              <input type="text" id="screen3" placeholder="ชื่อจอ (เช่น L3)" class="col-span-4 p-1.5 rounded-lg border text-center">
+              <input type="text" id="pin3" placeholder="PIN (3333)" class="col-span-3 p-1.5 rounded-lg border text-center">
+              <label class="col-span-3 flex items-center justify-center gap-1 text-[10px] font-semibold text-purple-600 cursor-pointer bg-purple-50 py-1.5 rounded-lg">
+                <input type="radio" name="tvScreenIndex" value="2"> 📺 ฟิกทีวี
+              </label>
+            </div>
+
+            <div class="grid grid-cols-12 gap-1.5 items-center bg-white p-1.5 rounded-xl border border-pink-100">
+              <span class="col-span-2 text-center font-bold text-pink-500 text-[11px]">จอ 4</span>
+              <input type="text" id="screen4" placeholder="ชื่อจอ (เช่น L4)" class="col-span-4 p-1.5 rounded-lg border text-center">
+              <input type="text" id="pin4" placeholder="PIN (4444)" class="col-span-3 p-1.5 rounded-lg border text-center">
+              <label class="col-span-3 flex items-center justify-center gap-1 text-[10px] font-semibold text-purple-600 cursor-pointer bg-purple-50 py-1.5 rounded-lg">
+                <input type="radio" name="tvScreenIndex" value="3"> 📺 ฟิกทีวี
+              </label>
+            </div>
+
+            <div class="grid grid-cols-12 gap-1.5 items-center bg-white p-1.5 rounded-xl border border-purple-200">
+              <span class="col-span-2 text-center font-bold text-purple-600 text-[11px]">จอ 5</span>
+              <input type="text" id="screen5" placeholder="ชื่อจอ (เช่น TV5)" class="col-span-4 p-1.5 rounded-lg border text-center">
+              <input type="text" id="pin5" placeholder="PIN (5555)" class="col-span-3 p-1.5 rounded-lg border text-center">
+              <label class="col-span-3 flex items-center justify-center gap-1 text-[10px] font-semibold text-purple-600 cursor-pointer bg-purple-100 py-1.5 rounded-lg">
+                <input type="radio" name="tvScreenIndex" value="4" checked> 📺 ฟิกทีวี
+              </label>
+            </div>
           </div>
         </div>
 
@@ -162,13 +255,13 @@
 
       <!-- ตารางแสดงบัญชีแม่ทั้งหมด -->
       <div class="border border-pink-200 rounded-3xl bg-white p-3 text-xs">
-        <p class="font-bold text-pink-700 mb-2">📋 รายชื่อบัญชีแม่ทั้งหมดในระบบ:</p>
-        <div class="max-h-56 overflow-y-auto overflow-x-auto">
+        <p class="font-bold text-pink-700 mb-2">📋 รายชื่อบัญชีแม่ทั้งหมดในระบบ (สามารถกดแก้ไขได้):</p>
+        <div class="max-h-56 overflow-y-auto">
           <table class="w-full text-left">
             <thead>
               <tr class="border-b text-gray-400">
-                <th class="pb-1.5">Email / ทุน</th>
-                <th class="pb-1.5 text-center">จำนวนจอ</th>
+                <th class="pb-1.5">อีเมล / ทุน</th>
+                <th class="pb-1.5 text-center">จอทีวีที่ฟิก</th>
                 <th class="pb-1.5 text-center">หมดอายุ</th>
                 <th class="pb-1.5 text-right">จัดการ</th>
               </tr>
@@ -182,18 +275,49 @@
     <!-- ================= TAB 3: ปฏิทินจอว่าง ================= -->
     <div id="sectionCalendar" class="hidden space-y-3 text-xs">
       <div class="bg-pink-50 border border-pink-200 p-4 rounded-3xl">
-        <p class="font-bold text-pink-800 mb-1">📅 ปฏิทินเช็คสถานะจอว่าง (แนะนำจอที่ควรปล่อยขาย):</p>
-        <p class="text-gray-500">ระบบคัดกรองจอที่ว่างหรือพร้อมขายมาให้คุณเลือกใช้งานได้ทันที</p>
+        <p class="font-bold text-pink-800 mb-1">📅 ปฏิทินเช็คสถานะทั้ง 5 จอ (แยกจอทีวี & จอมือถือชัดเจน):</p>
+        <p class="text-gray-500">ดูได้ทันทีว่าจอไหนว่างพร้อมขาย หรือกดปุ่มเพื่อเปลี่ยนสถานะจอได้ตลอดเวลา</p>
       </div>
 
       <div class="max-h-96 overflow-y-auto space-y-2.5" id="calendarContainer"></div>
     </div>
 
-    <!-- ================= TAB 4: กราฟสถิติ & กำไร ================= -->
+    <!-- ================= TAB 4: ปรับแต่งฟอร์มส่งงาน ================= -->
+    <div id="sectionTemplate" class="hidden space-y-3 text-xs">
+      <div class="bg-pink-50 border border-pink-200 p-4 rounded-3xl space-y-1">
+        <p class="font-bold text-pink-800">✏️ ปรับแต่งรูปแบบฟอร์มข้อความส่งลูกค้า:</p>
+        <p class="text-gray-500 text-[11px]">สามารถแก้ไขข้อความตกแต่ง อีโมจิ หรือกฎร้านได้ตามใจ โดยใช้ตัวแปรด้านล่างนี้ระบบจะแทนที่ข้อมูลให้อัตโนมัติ:</p>
+        <div class="flex flex-wrap gap-1 pt-1 font-mono text-[10px]">
+          <span class="bg-white px-2 py-0.5 rounded border border-pink-200 text-pink-600">{DAYS} = จำนวนวัน</span>
+          <span class="bg-white px-2 py-0.5 rounded border border-pink-200 text-pink-600">{DEVICE} = อุปกรณ์</span>
+          <span class="bg-white px-2 py-0.5 rounded border border-pink-200 text-pink-600">{EXP} = วันหมดอายุ</span>
+          <span class="bg-white px-2 py-0.5 rounded border border-pink-200 text-pink-600">{EMAIL} = อีเมล</span>
+          <span class="bg-white px-2 py-0.5 rounded border border-pink-200 text-pink-600">{PASS} = รหัสผ่าน</span>
+          <span class="bg-white px-2 py-0.5 rounded border border-pink-200 text-pink-600">{PIN} = รหัสพิน</span>
+          <span class="bg-white px-2 py-0.5 rounded border border-pink-200 text-pink-600">{SCREEN} = ชื่อจอ</span>
+        </div>
+      </div>
+
+      <textarea id="customTemplateEditor" rows="16" class="w-full p-3.5 text-xs bg-white border-2 border-pink-200 rounded-2xl font-mono text-gray-700 focus:outline-none focus:border-pink-400"></textarea>
+
+      <div class="flex gap-2">
+        <button type="button" onclick="saveCustomTemplate()" class="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-semibold py-2.5 rounded-xl shadow transition">
+          💾 บันทึกรูปแบบฟอร์มนี้
+        </button>
+        <button type="button" onclick="resetDefaultTemplate()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-2.5 rounded-xl transition">
+          🔄 คืนค่าเริ่มต้น
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= TAB 5: กราฟสถิติ & กำไร ================= -->
     <div id="sectionProfit" class="hidden space-y-4 text-xs">
-      <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-3xl">
-        <p class="font-bold text-emerald-800 mb-1">🧸 สถิติยอดขาย ต้นทุน & กำไรสูงสุด:</p>
-        <p class="text-emerald-700">วิเคราะห์ผลประกอบการผ่านกราฟและแผนภูมิสถิติ เข้าใจง่ายในพริบตา</p>
+      <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-3xl flex justify-between items-center">
+        <div>
+          <p class="font-bold text-emerald-800 mb-0.5">🧸 สถิติยอดขาย ต้นทุน & กำไรสูงสุด:</p>
+          <p class="text-emerald-700 text-[11px]">คำนวณจากยอดขายจริงหักต้นทุนเฉลี่ยต่อจอ (5 จอ/แอค)</p>
+        </div>
+        <button type="button" onclick="resetSalesData()" class="bg-red-100 hover:bg-red-200 text-red-600 px-3 py-1.5 rounded-xl text-[10px] font-bold">🗑️ ล้างยอดขาย</button>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
@@ -211,30 +335,30 @@
       <div class="space-y-4 bg-white p-4 rounded-3xl border border-pink-100 shadow-sm">
         <div>
           <p class="font-bold text-gray-700 mb-2 text-center">🥧 สัดส่วนรายได้ vs ต้นทุน (กราฟวงกลม)</p>
-          <div class="w-full h-48 flex justify-center"><canvas id="pieChart"></canvas></div>
+          <div class="w-full h-44 flex justify-center"><canvas id="pieChart"></canvas></div>
         </div>
 
         <hr class="border-pink-100">
 
         <div>
           <p class="font-bold text-gray-700 mb-2 text-center">📊 เปรียบเทียบยอดขายแต่ละบัญชีแม่ (แผนภูมิแท่ง)</p>
-          <div class="w-full h-48 flex justify-center"><canvas id="barChart"></canvas></div>
+          <div class="w-full h-44 flex justify-center"><canvas id="barChart"></canvas></div>
         </div>
 
         <hr class="border-pink-100">
 
         <div>
           <p class="font-bold text-gray-700 mb-2 text-center">📈 แนวโน้มยอดขายรายวัน (กราฟเส้น)</p>
-          <div class="w-full h-48 flex justify-center"><canvas id="lineChart"></canvas></div>
+          <div class="w-full h-44 flex justify-center"><canvas id="lineChart"></canvas></div>
         </div>
       </div>
 
       <!-- คำแนะนำกลยุทธ์ทำกำไรสูงสุด -->
       <div class="bg-pink-50 border border-pink-200 p-4 rounded-3xl space-y-1.5 text-gray-600">
-        <p class="font-bold text-pink-700">⭐ คำแนะนำเพื่อกำไรสูงสุด:</p>
+        <p class="font-bold text-pink-700">⭐ วิเคราะห์ความคุ้มค่า (เรทราคาตัวแทน 5 จอ):</p>
         <ul class="list-disc list-inside space-y-1">
-          <li>หากบัญชีแม่มีทุน 150 บาท และแบ่งเป็น 4 จอ ควรตั้งราคาขายจอละ 50 บาท (30 วัน) จะได้ยอดขายรวม 200 บาท กำไรสุทธิ 50 บาทต่อบัญชีทันที</li>
-          <li>หมั่นเช็คแท็บ "จอว่าง" เพื่อนำจอที่หมดอายุแล้วกลับมาหมุนเวียนขายใหม่ไม่ให้เสียเปล่า</li>
+          <li><b>ขายเหมา 30 วันครบ 5 จอ:</b> มือถือ 4 จอ (85×4 = 340฿) + ทีวี 1 จอ (105฿) = <b>รายรับ 445 บาท/บัญชี!</b> (หักทุน ~180฿ เหลือกำไรเน้นๆ ~265฿ ต่อแอค)</li>
+          <li><b>ขายรายวัน (1-10 วัน):</b> เฉลี่ยวันละ 5-10 บาท ทำรอบไว เหมาะสำหรับช่วงเร่งยอดหรือปิดช่องว่างระหว่างรอคนเช่า 30 วัน</li>
         </ul>
       </div>
     </div>
@@ -242,19 +366,65 @@
   </div>
 
   <script>
+    // เทมเพลตข้อความเริ่มต้น
+    const DEFAULT_TEMPLATE = `🌸♡     NETFLIX 4K  {DAYS}  ❨ {DEVICE}❩ 🧸
+                  exp 𓈒 {EXP} 🍓
+
+    mail 𓈒{EMAIL}
+    Pass  𓈒{PASS}
+                         pin         screen 
+                       {PIN}          {SCREEN}
+          ᡗ𓏽 . . 𓏽つ
+    กรุณาอ่านกฎก่อน𓈒เข้าใช้
+ ୨୧ ｡        ผิดกฎปรับ 500 บาททุกกรณี ‼️
+
+         𓏴 💘 ห้ามเปลี่ยนเมลพาส
+       หรือการตั้งค่าใด ๆ ทั้งสิ้น 𓏴
+
+          ☆   1 จอ ต่อ 1 อุปกรณ์ 🖱️
+      ย้ายเครื่องออกอันเดิมก่อน ☆
+
+     𓈒 ィ  หากจอชนรอ 20 - 60 นาที
+        จอหารงดโวยวายนะคะ 🐬
+
+    𓈒⠀❤︎  หากแอคมี𓈒ปัญหารบกวน
+    แจ้งร้าน งดแก้ไขปัญหาเอง🪄
+
+    🌸 ” มีประกัน เคลมไวดูแลตลอดอายุการใช้งาน “ 🌸
+
+𓈒   รับชมให้สนุกนะคะ 🐰
+แอคมีปัญหาทักได้เลยค่ะ      ♡ 𓈒`;
+
+    let customTemplate = DEFAULT_TEMPLATE;
+
+    // ตารางราคาขายตัวแทนตามที่กำหนด
+    const mobilePrices = {
+      1: 5, 2: 8, 3: 11, 4: 14, 5: 17,
+      6: 20, 7: 23, 8: 26, 9: 29, 10: 32,
+      30: 85
+    };
+
+    const tvPrices = {
+      1: 10, 2: 13, 3: 17, 4: 21, 5: 25,
+      6: 28, 7: 32, 8: 36, 9: 40, 10: 44,
+      30: 105
+    };
+
+    // ข้อมูลตัวอย่างเริ่มต้น
     let netflixMasterStore = [
       {
         id: 1,
-        email: 'net.cute@gmail.com',
+        email: 'net.cute5@gmail.com',
         pass: '@Pink1234',
-        cost: 150,
+        cost: 180,
         totalDays: 30,
-        expDate: '2026-06-30',
+        expDate: '2026-12-30',
         screens: [
-          { name: 'จอ 1 (L1)', pin: '1111', status: 'busy', buyerExp: '2026-06-30' },
-          { name: 'จอ 2 (L2)', pin: '2222', status: 'free', buyerExp: '' },
-          { name: 'จอ 3 (L3)', pin: '3333', status: 'free', buyerExp: '' },
-          { name: 'จอ 4 (L4)', pin: '4444', status: 'free', buyerExp: '' }
+          { name: 'จอ 1 (L1)', pin: '1111', isTv: false, status: 'free', buyerExp: '' },
+          { name: 'จอ 2 (L2)', pin: '2222', isTv: false, status: 'free', buyerExp: '' },
+          { name: 'จอ 3 (L3)', pin: '3333', isTv: false, status: 'free', buyerExp: '' },
+          { name: 'จอ 4 (L4)', pin: '4444', isTv: false, status: 'free', buyerExp: '' },
+          { name: 'จอ 5 (TV)', pin: '5555', isTv: true, status: 'free', buyerExp: '' }
         ]
       }
     ];
@@ -264,69 +434,107 @@
     let editingIndex = -1;
     let chartInstances = {};
 
-    function escapeHtml(str) {
-      return String(str ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+    function showToast(msg, icon = '🌸') {
+      const box = document.getElementById('toastBox');
+      document.getElementById('toastMsg').textContent = msg;
+      document.getElementById('toastIcon').textContent = icon;
+      box.classList.remove('hidden');
+      setTimeout(() => {
+        box.classList.remove('translate-y-[-20px]', 'opacity-0');
+      }, 10);
+      setTimeout(() => {
+        box.classList.add('translate-y-[-20px]', 'opacity-0');
+        setTimeout(() => box.classList.add('hidden'), 300);
+      }, 2800);
+    }
+
+    function askConfirm(msg, onYes) {
+      const modal = document.getElementById('confirmModal');
+      document.getElementById('confirmMsg').textContent = msg;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      document.getElementById('confirmYesBtn').onclick = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        onYes();
+      };
+      document.getElementById('confirmNoBtn').onclick = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+    }
+
+    function populateDaysDropdown() {
+      const select = document.getElementById('daysSelect');
+      select.innerHTML = '';
+      for (let d = 1; d <= 30; d++) {
+        const opt = document.createElement('option');
+        opt.value = d;
+        const dayPad = String(d).padStart(2, '0');
+        let label = `${dayPad} วัน`;
+        if (d === 7) label += ' (1 สัปดาห์)';
+        if (d === 15) label += ' (กึ่งเดือน)';
+        if (d === 30) label += ' (คุ้มสุดๆ 🔥)';
+        opt.textContent = label;
+        if (d === 30) opt.selected = true;
+        select.appendChild(opt);
+      }
+    }
+
+    function calculateAutoPrice(device, days) {
+      const table = device === 'ทีวี' ? tvPrices : mobilePrices;
+      if (table[days] !== undefined) {
+        return table[days];
+      }
+      if (device === 'ทีวี') {
+        return Math.round(44 + ((days - 10) * 3.05));
+      } else {
+        return Math.round(32 + ((days - 10) * 2.65));
+      }
+    }
+
+    function onDeviceOrDaysChange() {
+      const device = document.querySelector('input[name="device"]:checked').value;
+      const days = parseInt(document.getElementById('daysSelect').value);
+      
+      calculateExpDate();
+      
+      const autoPrice = calculateAutoPrice(device, days);
+      document.getElementById('salePrice').value = autoPrice;
+
+      refreshAllFormDropdowns();
     }
 
     function initSystem() {
-      try {
-        const savedStore = localStorage.getItem('netflix_master_v6');
-        if (savedStore) {
-          const parsedStore = JSON.parse(savedStore);
-          if (Array.isArray(parsedStore)) {
-            netflixMasterStore = parsedStore.map(acc => ({
-              ...acc,
-              screens: Array.isArray(acc.screens)
-                ? acc.screens.map(sc => ({
-                    ...sc,
-                    status: sc.status === 'free' ? 'free' : 'busy'
-                  }))
-                : []
-            }));
-          }
-        }
-      } catch (e) {
-        console.warn('โหลดข้อมูลคลังบัญชีไม่สำเร็จ:', e);
-      }
+      populateDaysDropdown();
 
-      try {
-        const savedSales = localStorage.getItem('netflix_sales_v6');
-        if (savedSales) {
-          const parsedSales = JSON.parse(savedSales);
-          if (Array.isArray(parsedSales)) salesHistory = parsedSales;
-        }
-      } catch (e) {
-        console.warn('โหลดข้อมูลประวัติการขายไม่สำเร็จ:', e);
-      }
+      const savedStore = localStorage.getItem('netflix_master_5screens_v1');
+      if (savedStore) netflixMasterStore = JSON.parse(savedStore);
+
+      const savedSales = localStorage.getItem('netflix_sales_5screens_v1');
+      if (savedSales) salesHistory = JSON.parse(savedSales);
+
+      const savedTpl = localStorage.getItem('netflix_custom_tpl_v1');
+      if (savedTpl) customTemplate = savedTpl;
+      document.getElementById('customTemplateEditor').value = customTemplate;
 
       resetFormBlocks();
       renderStoreTable();
+      onDeviceOrDaysChange();
       updateProfitDashboard();
     }
 
     function saveStoreToLocal() {
-      try {
-        localStorage.setItem('netflix_master_v6', JSON.stringify(netflixMasterStore));
-      } catch (e) {
-        console.warn('บันทึกคลังบัญชีไม่สำเร็จ:', e);
-      }
+      localStorage.setItem('netflix_master_5screens_v1', JSON.stringify(netflixMasterStore));
     }
 
     function saveSalesToLocal() {
-      try {
-        localStorage.setItem('netflix_sales_v6', JSON.stringify(salesHistory));
-      } catch (e) {
-        console.warn('บันทึกประวัติการขายไม่สำเร็จ:', e);
-      }
+      localStorage.setItem('netflix_sales_5screens_v1', JSON.stringify(salesHistory));
     }
 
     function switchTab(tab) {
-      ['form', 'store', 'calendar', 'profit'].forEach(t => {
+      ['form', 'store', 'calendar', 'template', 'profit'].forEach(t => {
         document.getElementById(`section${t.charAt(0).toUpperCase() + t.slice(1)}`).classList.add('hidden');
         document.getElementById(`nav${t.charAt(0).toUpperCase() + t.slice(1)}Btn`).className = "py-2.5 font-semibold rounded-xl transition text-gray-500 hover:text-pink-600";
       });
@@ -334,34 +542,78 @@
       document.getElementById(`section${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.remove('hidden');
       document.getElementById(`nav${tab.charAt(0).toUpperCase() + tab.slice(1)}Btn`).className = "py-2.5 font-semibold rounded-xl transition bg-pink-500 text-white shadow-sm";
 
-      if (tab === 'form') resetFormBlocks();
+      if (tab === 'form') refreshAllFormDropdowns();
       if (tab === 'calendar') renderScreenCalendar();
       if (tab === 'profit') updateProfitDashboard();
     }
 
-    function buildSlotOptionsHtml(selectedVal = '') {
-      let slotOptionsHtml = '<option value="">-- กรุณาเลือกบัญชีและจอว่าง --</option>';
+    // สร้าง options ของจอ โดยเชื่อมโยงวันหมดอายุบัญชีแม่และวันเหลือพอขาย
+    function buildSlotOptionsHtml() {
+      const selectedDevice = document.querySelector('input[name="device"]:checked').value;
+      const wantTv = (selectedDevice === 'ทีวี');
+      const requestedDays = parseInt(document.getElementById('daysSelect').value) || 30;
+      
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const today = `${year}-${month}-${day}`;
+
+      let html = `<option value="">-- เลือกบัญชีและจอว่าง (${wantTv ? 'เฉพาะจอฟิกทีวี 📺' : 'เฉพาะจอมือถือ 📱'}) --</option>`;
+      
       netflixMasterStore.forEach((acc, accIdx) => {
+        let remainingDays = 999;
+        if (acc.expDate) {
+          const expTime = new Date(acc.expDate).getTime();
+          const currentTime = new Date(today).getTime();
+          remainingDays = Math.ceil((expTime - currentTime) / (1000 * 60 * 60 * 24));
+        }
+
+        const isAccExpired = acc.expDate && acc.expDate < today;
+        const isNotEnoughDays = remainingDays < requestedDays;
+
         acc.screens.forEach((sc, scIdx) => {
-          const val = `${accIdx}-${scIdx}`;
-          const isFree = sc.status === 'free';
-          const statusBadge = isFree ? '🟢 [จอว่าง พร้อมขาย]' : '🔴 [กำลังใช้งาน]';
-          const selectedAttr = val === selectedVal ? ' selected' : '';
-          slotOptionsHtml += `<option value="${val}"${selectedAttr}>${escapeHtml(acc.email)} ➔ ${escapeHtml(sc.name)} (PIN: ${escapeHtml(sc.pin)}) ${statusBadge}</option>`;
+          if (wantTv && !sc.isTv) return;
+          if (!wantTv && sc.isTv) return;
+
+          let statusBadge = '';
+          let isDisabled = false;
+
+          if (isAccExpired) {
+            statusBadge = '🔴 [บัญชีแม่หมดอายุแล้ว]';
+            isDisabled = true;
+          } else if (isNotEnoughDays) {
+            statusBadge = `🔴 [บัญชีเหลือ ${remainingDays} วัน ไม่พอขาย ${requestedDays} วัน]`;
+            isDisabled = true;
+          } else if (sc.status !== 'free') {
+            statusBadge = '🔴 [ไม่ว่าง/มีผู้ใช้งาน]';
+            isDisabled = true;
+          } else {
+            statusBadge = '🟢 [ว่าง พร้อมขาย]';
+            isDisabled = false;
+          }
+
+          const tvTag = sc.isTv ? '📺[จอทีวี]' : '📱[จอมือถือ]';
+          html += `<option value="${accIdx}-${scIdx}" ${isDisabled ? 'disabled' : ''}>${acc.email} ➔ ${sc.name} ${tvTag} (PIN: ${sc.pin}) ${statusBadge}</option>`;
         });
       });
-      return slotOptionsHtml;
+
+      return html;
     }
 
-    function refreshAllFormSlotOptions() {
-      const blocks = document.getElementById('formBlocksContainer').children;
-      for (let i = 0; i < blocks.length; i++) {
-        const selectEl = blocks[i].querySelector('select[id^="select-slot-"]');
-        if (selectEl) {
-          const currentVal = selectEl.value;
-          selectEl.innerHTML = buildSlotOptionsHtml(currentVal);
+    function refreshAllFormDropdowns() {
+      const optionsHtml = buildSlotOptionsHtml();
+      document.querySelectorAll('[id^="select-slot-"]').forEach(select => {
+        const prevVal = select.value;
+        select.innerHTML = optionsHtml;
+        if ([...select.options].some(o => o.value === prevVal)) {
+          select.value = prevVal;
+        } else {
+          select.value = '';
+          const id = select.id.replace('select-slot-', '');
+          document.getElementById(`slot-preview-${id}`)?.classList.add('hidden');
         }
-      }
+      });
     }
 
     function resetFormBlocks() {
@@ -392,7 +644,6 @@
         </div>
 
         <div>
-          <label class="block text-[10px] text-gray-400 mb-0.5">เลือกบัญชีแม่ และ จอที่ต้องการส่ง (แนะนำจอว่าง)</label>
           <select id="select-slot-${id}" onchange="onSlotSelected(${id})" class="w-full px-2.5 py-2 text-xs rounded-xl border border-pink-200 bg-white focus:outline-none focus:ring-1 focus:ring-pink-400">
             ${slotOptionsHtml}
           </select>
@@ -420,23 +671,16 @@
     }
 
     function onSlotSelected(id) {
-      const selectEl = document.getElementById(`select-slot-${id}`);
-      const val = selectEl.value;
+      const val = document.getElementById(`select-slot-${id}`).value;
       const previewDiv = document.getElementById(`slot-preview-${id}`);
       if (!val) {
-        document.getElementById(`hidden-acc-${id}`).value = '';
-        document.getElementById(`hidden-sc-${id}`).value = '';
         previewDiv.classList.add('hidden');
         return;
       }
 
       const [accIdx, scIdx] = val.split('-');
       const acc = netflixMasterStore[accIdx];
-      const sc = acc ? acc.screens[scIdx] : null;
-      if (!acc || !sc) {
-        previewDiv.classList.add('hidden');
-        return;
-      }
+      const sc = acc.screens[scIdx];
 
       document.getElementById(`pass-${id}`).value = acc.pass;
       document.getElementById(`pin-${id}`).value = sc.pin;
@@ -465,45 +709,42 @@
       const email = document.getElementById('accEmail').value.trim();
       const pass = document.getElementById('accPass').value.trim();
       const cost = parseFloat(document.getElementById('accCost').value) || 0;
-      const totalDays = parseInt(document.getElementById('accTotalDays').value, 10) || 30;
+      const totalDays = parseInt(document.getElementById('accTotalDays').value) || 30;
       const expDate = document.getElementById('accExpDate').value;
 
       if (!email || !pass || !expDate) {
-        alert('กรุณากรอก Email, Pass และวันหมดอายุให้ครบถ้วนนะคะ 🧸');
+        showToast('กรุณากรอก Email, Pass และวันหมดอายุให้ครบถ้วนนะคะ', '🧸');
         return;
       }
+
+      const tvRadio = document.querySelector('input[name="tvScreenIndex"]:checked');
+      const tvIndex = tvRadio ? parseInt(tvRadio.value) : 4;
 
       let screens = [];
-      for (let i = 1; i <= 4; i++) {
-        const sName = document.getElementById(`screen${i}`).value.trim();
-        const sPin = document.getElementById(`pin${i}`).value.trim();
-        if (sName && sPin) {
-          screens.push({ name: sName, pin: sPin, status: 'free', buyerExp: '' });
-        }
+      for (let i = 1; i <= 5; i++) {
+        const sName = document.getElementById(`screen${i}`).value.trim() || `จอ ${i}`;
+        const sPin = document.getElementById(`pin${i}`).value.trim() || `${i}${i}${i}${i}`;
+        const isTv = ((i - 1) === tvIndex);
+        screens.push({ name: sName, pin: sPin, isTv: isTv, status: 'free', buyerExp: '' });
       }
 
-      if (screens.length === 0) {
-        alert('กรุณากำหนดชื่อจอและ PIN อย่างน้อย 1 จอนะคะ 🌸');
-        return;
-      }
-
-      if (editingIndex >= 0 && netflixMasterStore[editingIndex]) {
-        const oldScreens = netflixMasterStore[editingIndex].screens || [];
+      if (editingIndex >= 0) {
         screens.forEach((sc, idx) => {
-          if (oldScreens[idx]) {
-            sc.status = oldScreens[idx].status === 'free' ? 'free' : 'busy';
-            sc.buyerExp = sc.status === 'busy' ? (oldScreens[idx].buyerExp || expDate) : '';
+          if (netflixMasterStore[editingIndex].screens[idx]) {
+            sc.status = netflixMasterStore[editingIndex].screens[idx].status;
+            sc.buyerExp = netflixMasterStore[editingIndex].screens[idx].buyerExp;
           }
         });
         netflixMasterStore[editingIndex] = { id: netflixMasterStore[editingIndex].id, email, pass, cost, totalDays, expDate, screens };
-        alert('แก้ไขบัญชีแม่เรียบร้อยแล้วค่ะ! ✨');
+        showToast('แก้ไขข้อมูลบัญชีแม่เรียบร้อยแล้วค่ะ!', '✨');
       } else {
         netflixMasterStore.push({ id: Date.now(), email, pass, cost, totalDays, expDate, screens });
-        alert('บันทึกบัญชีแม่เข้าคลังเรียบร้อยแล้วค่ะ! 🌸');
+        showToast('บันทึกบัญชีแม่ทั้ง 5 จอเข้าคลังเรียบร้อย!', '🌸');
       }
 
       saveStoreToLocal();
       renderStoreTable();
+      refreshAllFormDropdowns();
       cancelAccountEdit();
     }
 
@@ -517,15 +758,18 @@
       }
 
       netflixMasterStore.forEach((acc, idx) => {
+        const tvScreen = acc.screens.find(s => s.isTv);
+        const tvLabel = tvScreen ? `${tvScreen.name} (${tvScreen.pin})` : '-';
+
         const tr = document.createElement('tr');
-        tr.className = "border-b border-pink-50 text-gray-600";
+        tr.className = "border-b border-pink-50 text-gray-600 hover:bg-pink-50/40 transition";
         tr.innerHTML = `
-          <td class="py-2 truncate max-w-[120px] font-semibold text-pink-600">${escapeHtml(acc.email)}<br><span class="text-[10px] text-gray-400 font-normal">ทุน: ${acc.cost}฿</span></td>
-          <td class="py-2 text-center">${acc.screens.length} จอ</td>
-          <td class="py-2 text-center text-[10px]">${escapeHtml(acc.expDate)}</td>
-          <td class="py-2 text-right space-x-1 whitespace-nowrap">
-            <button type="button" onclick="editAccount(${idx})" class="text-[10px] bg-pink-100 text-pink-700 px-1.5 py-0.5 rounded-lg">แก้ไข</button>
-            <button type="button" onclick="deleteAccount(${idx})" class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-lg">ลบ</button>
+          <td class="py-2.5 truncate max-w-[130px] font-semibold text-pink-600">${acc.email}<br><span class="text-[10px] text-gray-400 font-normal">ทุน: ${acc.cost}฿ (5 จอ) | ${acc.totalDays || 30} วัน</span></td>
+          <td class="py-2.5 text-center"><span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">📺 ${tvLabel}</span></td>
+          <td class="py-2.5 text-center text-[10px] font-medium">${acc.expDate}</td>
+          <td class="py-2.5 text-right space-x-1 relative z-10">
+            <button type="button" onclick="editAccount(${idx})" class="cursor-pointer text-[11px] bg-pink-100 hover:bg-pink-200 text-pink-700 px-2.5 py-1.5 rounded-lg font-bold transition inline-block">✏️ แก้ไข</button>
+            <button type="button" onclick="deleteAccount(${idx})" class="cursor-pointer text-[11px] bg-red-100 hover:bg-red-200 text-red-600 px-2.5 py-1.5 rounded-lg font-bold transition inline-block">🗑️ ลบ</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -533,24 +777,31 @@
     }
 
     function editAccount(index) {
-      const acc = netflixMasterStore[index];
-      if (!acc) return;
       editingIndex = index;
+      const acc = netflixMasterStore[index];
 
       document.getElementById('accEmail').value = acc.email;
       document.getElementById('accPass').value = acc.pass;
       document.getElementById('accCost').value = acc.cost;
-      document.getElementById('accTotalDays').value = acc.totalDays;
+      document.getElementById('accTotalDays').value = acc.totalDays || 30;
       document.getElementById('accExpDate').value = acc.expDate;
 
-      for (let i = 1; i <= 4; i++) {
-        document.getElementById(`screen${i}`).value = acc.screens[i-1] ? acc.screens[i-1].name : '';
-        document.getElementById(`pin${i}`).value = acc.screens[i-1] ? acc.screens[i-1].pin : '';
+      for (let i = 1; i <= 5; i++) {
+        const sc = acc.screens[i - 1];
+        document.getElementById(`screen${i}`).value = sc ? sc.name : '';
+        document.getElementById(`pin${i}`).value = sc ? sc.pin : '';
+        if (sc && sc.isTv) {
+          const radio = document.querySelector(`input[name="tvScreenIndex"][value="${i - 1}"]`);
+          if (radio) radio.checked = true;
+        }
       }
 
-      document.getElementById('storeFormTitle').textContent = '🧸 แก้ไขข้อมูลบัญชีแม่';
+      document.getElementById('storeFormTitle').textContent = '🧸 แก้ไขข้อมูลบัญชีแม่ (5 จอ)';
       document.getElementById('btnSaveAcc').textContent = '💾 บันทึกการแก้ไข';
       document.getElementById('btnCancelAcc').classList.remove('hidden');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast('โหลดข้อมูลบัญชีแม่มาให้แก้ไขแล้วค่ะ', '✏️');
     }
 
     function cancelAccountEdit() {
@@ -560,48 +811,34 @@
       document.getElementById('accCost').value = '';
       document.getElementById('accTotalDays').value = '30';
       document.getElementById('accExpDate').value = '';
-      for (let i = 1; i <= 4; i++) {
+      for (let i = 1; i <= 5; i++) {
         document.getElementById(`screen${i}`).value = '';
         document.getElementById(`pin${i}`).value = '';
       }
-      document.getElementById('storeFormTitle').textContent = '🌸 เพิ่มบัญชีแม่และกำหนดจอ';
+      document.getElementById('storeFormTitle').textContent = '🌸 เพิ่มบัญชีแม่ (ครบ 5 จอ + ฟิก 1 จอสำหรับทีวี)';
       document.getElementById('btnSaveAcc').textContent = '💾 บันทึกบัญชีแม่เข้าคลัง';
       document.getElementById('btnCancelAcc').classList.add('hidden');
     }
 
     function deleteAccount(index) {
-      if (confirm('ต้องการลบบัญชีนี้ออกจากคลังใช่ไหมคะ?')) {
+      askConfirm('ต้องการลบบัญชีแม่นี้ออกจากคลังใช่ไหมคะ?', () => {
         netflixMasterStore.splice(index, 1);
         saveStoreToLocal();
         renderStoreTable();
+        refreshAllFormDropdowns();
         if (editingIndex === index) cancelAccountEdit();
-        else if (editingIndex > index) editingIndex--;
-      }
+        showToast('ลบบัญชีเรียบร้อยแล้วค่ะ', '🗑️');
+      });
     }
 
     function calculateExpDate() {
-      const daysAdd = parseInt(document.getElementById('daysSelect').value, 10);
+      const daysAdd = parseInt(document.getElementById('daysSelect').value) || 30;
       const targetDate = new Date();
       targetDate.setDate(targetDate.getDate() + daysAdd);
       const day = String(targetDate.getDate()).padStart(2, '0');
       const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-      document.getElementById('expDate').value = `${day} / ${month} - 22:00 น.`;
-    }
-
-    function copyTextFallback(text, onSuccess) {
-      const outputEl = document.getElementById('output');
-      outputEl.value = text;
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(onSuccess).catch(() => {
-          outputEl.select();
-          try { document.execCommand('copy'); } catch (e) {}
-          onSuccess();
-        });
-      } else {
-        outputEl.select();
-        try { document.execCommand('copy'); } catch (e) {}
-        onSuccess();
-      }
+      const year = targetDate.getFullYear();
+      document.getElementById('expDate').value = `${day} / ${month} / ${year} - 22:00 น.`;
     }
 
     function generateText(event) {
@@ -613,8 +850,8 @@
       const salePrice = parseFloat(document.getElementById('salePrice').value) || 0;
 
       const blocks = document.getElementById('formBlocksContainer').children;
-      let selectedSlots = [];
-      let seenSlotKeys = new Set();
+      let fullOutput = [];
+      let newSalesCount = 0;
 
       for (let i = 0; i < blocks.length; i++) {
         const block = blocks[i];
@@ -623,59 +860,26 @@
 
         if (accIdx === "" || scIdx === "") continue;
 
-        const slotKey = `${accIdx}-${scIdx}`;
-        if (seenSlotKeys.has(slotKey)) {
-          alert('มีการเลือกบัญชีและจอซ้ำกันในฟอร์ม กรุณาตรวจสอบอีกครั้งนะคะ 🧸');
-          return;
-        }
-        seenSlotKeys.add(slotKey);
-        selectedSlots.push({ accIdx, scIdx });
-      }
-
-      if (selectedSlots.length === 0) {
-        alert('กรุณาเลือกบัญชีและจออย่างน้อย 1 ฟอร์มก่อนกดสร้างข้อความนะคะ 🧸');
-        return;
-      }
-
-      let fullOutput = [];
-      let newSalesCount = 0;
-
-      selectedSlots.forEach((slot, i) => {
-        const acc = netflixMasterStore[slot.accIdx];
-        const sc = acc ? acc.screens[slot.scIdx] : null;
-        if (!acc || !sc) return;
+        const acc = netflixMasterStore[accIdx];
+        const sc = acc.screens[scIdx];
 
         sc.status = 'busy';
         sc.buyerExp = expDate;
 
         const headerPrefix = (i === 0) ? "" : "#";
-        const singleFormTemplate = `${headerPrefix}🌸♡     NETFLIX 4K  ${daysText}  ❨ ${device}❩ 🧸
-                  exp 𓈒 ${expDate} 🍓
+        
+        let singleFormTemplate = customTemplate
+          .replace(/{DAYS}/g, daysText)
+          .replace(/{DEVICE}/g, device)
+          .replace(/{EXP}/g, expDate)
+          .replace(/{EMAIL}/g, acc.email)
+          .replace(/{PASS}/g, acc.pass)
+          .replace(/{PIN}/g, sc.pin)
+          .replace(/{SCREEN}/g, sc.name);
 
-    mail 𓈒${acc.email}
-    Pass  𓈒${acc.pass}
-                         pin         screen 
-                       ${sc.pin}          ${sc.name}
-          ᡗ𓏽 . . 𓏽つ
-    กรุณาอ่านกฎก่อน𓈒เข้าใช้
- ୨୧ ｡        ผิดกฎปรับ 500 บาททุกกรณี ‼️
-
-         𓏴 💘 ห้ามเปลี่ยนเมลพาส
-       หรือการตั้งค่าใด ๆ ทั้งสิ้น 𓏴
-
-          ☆   1 จอ ต่อ 1 อุปกรณ์ 🖱️
-      ย้ายเครื่องออกอันเดิมก่อน ☆
-
-     𓈒 ィ  หากจอชนรอ 20 - 60 นาที
-        จอหารงดโวยวายนะคะ 🐬
-
-    𓈒⠀❤︎  หากแอคมี𓈒ปัญหารบกวน
-    แจ้งร้าน งดแก้ไขปัญหาเอง🪄
-
-    🌸 ” มีประกัน เคลมไวดูแลตลอดอายุการใช้งาน “ 🌸
-
-𓈒   รับชมให้สนุกนะคะ 🐰
-แอคมีปัญหาทักได้เลยค่ะ      ♡ 𓈒`;
+        if (headerPrefix) {
+          singleFormTemplate = headerPrefix + singleFormTemplate;
+        }
 
         fullOutput.push(singleFormTemplate);
 
@@ -687,21 +891,66 @@
           email: acc.email,
           screen: sc.name,
           price: salePrice,
-          cost: acc.screens.length > 0 ? (acc.cost / acc.screens.length) : 0,
+          cost: acc.cost / 5,
           date: dateStr
         });
         newSalesCount++;
-      });
+      }
+
+      if (fullOutput.length === 0) {
+        showToast('กรุณาเลือกบัญชีและจออย่างน้อย 1 ฟอร์มก่อนกดสร้างข้อความนะคะ', '🧸');
+        return;
+      }
 
       saveStoreToLocal();
       saveSalesToLocal();
-      refreshAllFormSlotOptions();
       updateProfitDashboard();
+      refreshAllFormDropdowns();
 
       const finalText = fullOutput.join("\n\n");
-      copyTextFallback(finalText, () => {
-        alert(`สร้างข้อความและบันทึกยอดขาย ${newSalesCount} รายการเรียบร้อยแล้วค่ะ! 🌸`);
-      });
+      document.getElementById('output').value = finalText;
+      
+      const textArea = document.getElementById('output');
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast(`สร้างข้อความและบันทึกยอดขาย ${newSalesCount} รายการ พร้อมคัดลอกแล้ว!`, '📋');
+      } catch (err) {
+        showToast(`สร้างข้อความและบันทึกยอดขาย ${newSalesCount} รายการสำเร็จ!`, '🌸');
+      }
+    }
+
+    function copyOutputOnly() {
+      const textArea = document.getElementById('output');
+      if (!textArea.value) {
+        showToast('ยังไม่มีข้อความให้คัดลอกค่ะ', '⚠️');
+        return;
+      }
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('คัดลอกข้อความเรียบร้อยแล้วค่ะ!', '📋');
+      } catch (err) {
+        showToast('ไม่สามารถคัดลอกอัตโนมัติได้', '⚠️');
+      }
+    }
+
+    function saveCustomTemplate() {
+      const val = document.getElementById('customTemplateEditor').value.trim();
+      if (!val) {
+        showToast('รูปแบบฟอร์มต้องไม่ว่างเปล่าค่ะ', '⚠️');
+        return;
+      }
+      customTemplate = val;
+      localStorage.setItem('netflix_custom_tpl_v1', customTemplate);
+      showToast('บันทึกรูปแบบฟอร์มใหม่เรียบร้อยแล้ว!', '💾');
+    }
+
+    function resetDefaultTemplate() {
+      customTemplate = DEFAULT_TEMPLATE;
+      document.getElementById('customTemplateEditor').value = customTemplate;
+      localStorage.setItem('netflix_custom_tpl_v1', customTemplate);
+      showToast('คืนค่ารูปแบบฟอร์มเริ่มต้นแล้วค่ะ', '🔄');
     }
 
     function renderScreenCalendar() {
@@ -713,24 +962,34 @@
         return;
       }
 
-      netflixMasterStore.forEach((acc, accIdx) => {
-        acc.screens.forEach((sc, scIdx) => {
-          const isFree = sc.status === 'free';
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const today = `${year}-${month}-${day}`;
+
+      netflixMasterStore.forEach(acc => {
+        const isAccExpired = acc.expDate && acc.expDate < today;
+
+        acc.screens.forEach(sc => {
+          const isFree = (sc.status === 'free') && !isAccExpired;
           const statusBg = isFree ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-pink-50 border-pink-200 text-pink-700';
-          const expLabel = sc.buyerExp || acc.expDate || '-';
-          const statusText = isFree ? '🟢 สถานะ: จอว่างพร้อมขายทันที' : `🔴 สถานะ: ใช้งานอยู่ (หมดอายุ: ${escapeHtml(expLabel)})`;
+          let statusText = isFree ? '🟢 สถานะ: จอว่างพร้อมขายทันที' : `🔴 สถานะ: ใช้งานอยู่ (หมดอายุ: ${sc.buyerExp || 'ใช้งาน'})`;
+          if (isAccExpired) statusText = '🔴 สถานะ: บัญชีแม่หมดอายุแล้ว';
+
+          const tvTag = sc.isTv ? '📺 [จอทีวี]' : '📱 [จอมือถือ]';
 
           const card = document.createElement('div');
-          card.className = `p-3.5 rounded-3xl border ${statusBg} text-xs flex justify-between items-center gap-2`;
+          card.className = `p-3.5 rounded-3xl border ${statusBg} text-xs flex justify-between items-center`;
           card.innerHTML = `
-            <div class="min-w-0">
+            <div>
               <span class="font-bold text-pink-600">[NETFLIX]</span> 
-              <span class="font-semibold text-gray-700 break-all">${escapeHtml(acc.email)}</span><br>
-              <span class="text-gray-600">จอ: <b>${escapeHtml(sc.name)}</b> | PIN: <b>${escapeHtml(sc.pin)}</b></span><br>
+              <span class="font-semibold text-gray-700">${acc.email}</span><br>
+              <span class="text-gray-600">${tvTag} ชื่อจอ: <b>${sc.name}</b> | PIN: <b>${sc.pin}</b></span><br>
               <span class="text-[11px] font-medium">${statusText}</span>
             </div>
-            <div class="shrink-0">
-              <button type="button" onclick="toggleSlotStatus(${accIdx}, ${scIdx})" class="px-3 py-1 rounded-2xl text-[11px] font-bold ${isFree ? 'bg-emerald-500 text-white' : 'bg-pink-500 text-white'}">
+            <div>
+              <button onclick="toggleSlotStatus('${acc.email}', '${sc.name}')" class="px-3 py-1.5 rounded-2xl text-[11px] font-bold ${isFree ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-pink-500 text-white hover:bg-pink-600'} transition shadow-sm">
                 ${isFree ? 'ว่าง' : 'เคลียร์เป็นว่าง'}
               </button>
             </div>
@@ -740,20 +999,21 @@
       });
     }
 
-    function toggleSlotStatus(accIdx, scIdx) {
-      const acc = netflixMasterStore[accIdx];
-      const sc = acc ? acc.screens[scIdx] : null;
-      if (!acc || !sc) return;
-
-      sc.status = sc.status === 'free' ? 'busy' : 'free';
-      if (sc.status === 'free') {
-        sc.buyerExp = '';
-      } else if (!sc.buyerExp) {
-        sc.buyerExp = document.getElementById('expDate')?.value || acc.expDate || '';
-      }
-
+    function toggleSlotStatus(email, screenName) {
+      netflixMasterStore.forEach(acc => {
+        if (acc.email === email) {
+          acc.screens.forEach(sc => {
+            if (sc.name === screenName) {
+              sc.status = sc.status === 'free' ? 'busy' : 'free';
+              if (sc.status === 'free') sc.buyerExp = '';
+            }
+          });
+        }
+      });
       saveStoreToLocal();
       renderScreenCalendar();
+      refreshAllFormDropdowns();
+      showToast('อัปเดตสถานะจอเรียบร้อยแล้วค่ะ', '🔄');
     }
 
     function updateProfitDashboard() {
@@ -761,8 +1021,8 @@
       let totalCost = 0;
 
       salesHistory.forEach(item => {
-        totalRev += Number(item.price) || 0;
-        totalCost += Number(item.cost) || 0;
+        totalRev += item.price;
+        totalCost += item.cost || 0;
       });
 
       let netProfit = totalRev - totalCost;
@@ -773,9 +1033,16 @@
       renderCharts(totalRev, totalCost);
     }
 
-    function renderCharts(rev, cost) {
-      if (typeof Chart === 'undefined') return;
+    function resetSalesData() {
+      askConfirm('ต้องการล้างประวัติยอดขายทั้งหมดใช่ไหมคะ?', () => {
+        salesHistory = [];
+        saveSalesToLocal();
+        updateProfitDashboard();
+        showToast('ล้างข้อมูลยอดขายเรียบร้อยแล้วค่ะ', '🗑️');
+      });
+    }
 
+    function renderCharts(rev, cost) {
       if (chartInstances.pie) chartInstances.pie.destroy();
       const ctxPie = document.getElementById('pieChart').getContext('2d');
       chartInstances.pie = new Chart(ctxPie, {
@@ -783,7 +1050,7 @@
         data: {
           labels: ['ยอดขายรวม', 'ต้นทุนรวม'],
           datasets: [{
-            data: (rev === 0 && cost === 0) ? [1, 1] : [rev, cost],
+            data: [rev || 1, cost || 1],
             backgroundColor: ['#f472b6', '#a7f3d0']
           }]
         },
@@ -792,7 +1059,7 @@
 
       let accSales = {};
       salesHistory.forEach(s => {
-        accSales[s.email] = (accSales[s.email] || 0) + (Number(s.price) || 0);
+        accSales[s.email] = (accSales[s.email] || 0) + s.price;
       });
 
       if (chartInstances.bar) chartInstances.bar.destroy();
@@ -812,7 +1079,7 @@
 
       let dateSales = {};
       salesHistory.forEach(s => {
-        dateSales[s.date] = (dateSales[s.date] || 0) + (Number(s.price) || 0);
+        dateSales[s.date] = (dateSales[s.date] || 0) + s.price;
       });
 
       if (chartInstances.line) chartInstances.line.destroy();
