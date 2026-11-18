@@ -38,9 +38,9 @@
 
     <!-- ================= TAB 1: ฟอร์มส่งงาน ================= -->
     <div id="sectionForm" class="space-y-4">
-      <div class="bg-pink-50/60 p-3 rounded-2xl border border-pink-200 text-xs text-pink-700 flex justify-between items-center">
+      <div class="bg-pink-50/60 p-3 rounded-2xl border border-pink-200 text-xs text-pink-700 flex justify-between items-center gap-2">
         <span>✨ ระบบเลือกจอว่างให้อัตโนมัติ ป้องกันการขายซ้ำ!</span>
-        <button type="button" onclick="switchTab('store')" class="bg-pink-500 text-white px-2.5 py-1 rounded-xl text-[10px] font-bold">➕ เพิ่มบัญชีใหม่</button>
+        <button type="button" onclick="switchTab('store')" class="bg-pink-500 text-white px-2.5 py-1 rounded-xl text-[10px] font-bold shrink-0">➕ เพิ่มบัญชีใหม่</button>
       </div>
 
       <form id="serviceForm" onsubmit="generateText(event)" class="space-y-3">
@@ -76,7 +76,7 @@
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">ราคาขาย (บาท)</label>
-            <input type="number" id="salePrice" value="65" class="w-full px-3 py-2 text-xs font-semibold text-center rounded-2xl border border-pink-200 bg-white focus:outline-none focus:ring-2 focus:ring-pink-300">
+            <input type="number" id="salePrice" value="65" min="0" step="any" class="w-full px-3 py-2 text-xs font-semibold text-center rounded-2xl border border-pink-200 bg-white focus:outline-none focus:ring-2 focus:ring-pink-300">
           </div>
         </div>
 
@@ -100,7 +100,7 @@
       <!-- พรีวิวข้อความ -->
       <div class="mt-4">
         <label class="block text-xs font-medium text-gray-400 mb-1">ตัวอย่างข้อความพร้อมส่ง:</label>
-        <textarea id="output" rows="10" readonly class="w-full p-3 text-xs bg-pink-50/30 border border-pink-200 rounded-2xl font-mono whitespace-pre text-gray-600 focus:outline-none"></textarea>
+        <textarea id="output" rows="10" readonly class="w-full p-3 text-xs bg-pink-50/30 border border-pink-200 rounded-2xl font-mono whitespace-pre-wrap break-words text-gray-600 focus:outline-none"></textarea>
       </div>
     </div>
 
@@ -123,11 +123,11 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
           <div>
             <label class="block text-gray-500 mb-0.5">ต้นทุนซื้อมา (บาท)</label>
-            <input type="number" id="accCost" placeholder="150" class="w-full p-2.5 rounded-xl border border-pink-200 text-center bg-white font-bold text-pink-600">
+            <input type="number" id="accCost" placeholder="150" min="0" step="any" class="w-full p-2.5 rounded-xl border border-pink-200 text-center bg-white font-bold text-pink-600">
           </div>
           <div>
             <label class="block text-gray-500 mb-0.5">จำนวนวันทั้งหมด</label>
-            <input type="number" id="accTotalDays" value="30" class="w-full p-2.5 rounded-xl border border-pink-200 text-center bg-white">
+            <input type="number" id="accTotalDays" value="30" min="1" class="w-full p-2.5 rounded-xl border border-pink-200 text-center bg-white">
           </div>
           <div>
             <label class="block text-gray-500 mb-0.5">วันหมดอายุบัญชี</label>
@@ -135,7 +135,7 @@
           </div>
         </div>
 
-        <!-- ส่วนกำหนดจอ 1 ถึง 5 และ PIN -->
+        <!-- ส่วนกำหนดจอ 1 ถึง 4 และ PIN -->
         <div class="border-t border-pink-200/60 pt-2 text-xs space-y-2">
           <label class="block font-bold text-pink-700">🖥️ กำหนดรายชื่อจอและ PIN (เช่น จอ 1 ถึง 4):</label>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -163,7 +163,7 @@
       <!-- ตารางแสดงบัญชีแม่ทั้งหมด -->
       <div class="border border-pink-200 rounded-3xl bg-white p-3 text-xs">
         <p class="font-bold text-pink-700 mb-2">📋 รายชื่อบัญชีแม่ทั้งหมดในระบบ:</p>
-        <div class="max-h-56 overflow-y-auto">
+        <div class="max-h-56 overflow-y-auto overflow-x-auto">
           <table class="w-full text-left">
             <thead>
               <tr class="border-b text-gray-400">
@@ -251,7 +251,7 @@
         totalDays: 30,
         expDate: '2026-06-30',
         screens: [
-          { name: 'จอ 1 (L1)', pin: '1111', status: 'active', buyerExp: '2026-06-30' },
+          { name: 'จอ 1 (L1)', pin: '1111', status: 'busy', buyerExp: '2026-06-30' },
           { name: 'จอ 2 (L2)', pin: '2222', status: 'free', buyerExp: '' },
           { name: 'จอ 3 (L3)', pin: '3333', status: 'free', buyerExp: '' },
           { name: 'จอ 4 (L4)', pin: '4444', status: 'free', buyerExp: '' }
@@ -264,12 +264,45 @@
     let editingIndex = -1;
     let chartInstances = {};
 
-    function initSystem() {
-      const savedStore = localStorage.getItem('netflix_master_v6');
-      if (savedStore) netflixMasterStore = JSON.parse(savedStore);
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
 
-      const savedSales = localStorage.getItem('netflix_sales_v6');
-      if (savedSales) salesHistory = JSON.parse(savedSales);
+    function initSystem() {
+      try {
+        const savedStore = localStorage.getItem('netflix_master_v6');
+        if (savedStore) {
+          const parsedStore = JSON.parse(savedStore);
+          if (Array.isArray(parsedStore)) {
+            netflixMasterStore = parsedStore.map(acc => ({
+              ...acc,
+              screens: Array.isArray(acc.screens)
+                ? acc.screens.map(sc => ({
+                    ...sc,
+                    status: sc.status === 'free' ? 'free' : 'busy'
+                  }))
+                : []
+            }));
+          }
+        }
+      } catch (e) {
+        console.warn('โหลดข้อมูลคลังบัญชีไม่สำเร็จ:', e);
+      }
+
+      try {
+        const savedSales = localStorage.getItem('netflix_sales_v6');
+        if (savedSales) {
+          const parsedSales = JSON.parse(savedSales);
+          if (Array.isArray(parsedSales)) salesHistory = parsedSales;
+        }
+      } catch (e) {
+        console.warn('โหลดข้อมูลประวัติการขายไม่สำเร็จ:', e);
+      }
 
       resetFormBlocks();
       renderStoreTable();
@@ -277,11 +310,19 @@
     }
 
     function saveStoreToLocal() {
-      localStorage.setItem('netflix_master_v6', JSON.stringify(netflixMasterStore));
+      try {
+        localStorage.setItem('netflix_master_v6', JSON.stringify(netflixMasterStore));
+      } catch (e) {
+        console.warn('บันทึกคลังบัญชีไม่สำเร็จ:', e);
+      }
     }
 
     function saveSalesToLocal() {
-      localStorage.setItem('netflix_sales_v6', JSON.stringify(salesHistory));
+      try {
+        localStorage.setItem('netflix_sales_v6', JSON.stringify(salesHistory));
+      } catch (e) {
+        console.warn('บันทึกประวัติการขายไม่สำเร็จ:', e);
+      }
     }
 
     function switchTab(tab) {
@@ -296,6 +337,31 @@
       if (tab === 'form') resetFormBlocks();
       if (tab === 'calendar') renderScreenCalendar();
       if (tab === 'profit') updateProfitDashboard();
+    }
+
+    function buildSlotOptionsHtml(selectedVal = '') {
+      let slotOptionsHtml = '<option value="">-- กรุณาเลือกบัญชีและจอว่าง --</option>';
+      netflixMasterStore.forEach((acc, accIdx) => {
+        acc.screens.forEach((sc, scIdx) => {
+          const val = `${accIdx}-${scIdx}`;
+          const isFree = sc.status === 'free';
+          const statusBadge = isFree ? '🟢 [จอว่าง พร้อมขาย]' : '🔴 [กำลังใช้งาน]';
+          const selectedAttr = val === selectedVal ? ' selected' : '';
+          slotOptionsHtml += `<option value="${val}"${selectedAttr}>${escapeHtml(acc.email)} ➔ ${escapeHtml(sc.name)} (PIN: ${escapeHtml(sc.pin)}) ${statusBadge}</option>`;
+        });
+      });
+      return slotOptionsHtml;
+    }
+
+    function refreshAllFormSlotOptions() {
+      const blocks = document.getElementById('formBlocksContainer').children;
+      for (let i = 0; i < blocks.length; i++) {
+        const selectEl = blocks[i].querySelector('select[id^="select-slot-"]');
+        if (selectEl) {
+          const currentVal = selectEl.value;
+          selectEl.innerHTML = buildSlotOptionsHtml(currentVal);
+        }
+      }
     }
 
     function resetFormBlocks() {
@@ -315,14 +381,7 @@
       blockDiv.id = `form-block-${id}`;
       blockDiv.className = "p-3.5 bg-pink-50/40 rounded-3xl border border-pink-200 space-y-2 relative";
 
-      let slotOptionsHtml = '<option value="">-- กรุณาเลือกบัญชีและจอว่าง --</option>';
-      netflixMasterStore.forEach((acc, accIdx) => {
-        acc.screens.forEach((sc, scIdx) => {
-          const isFree = sc.status === 'free';
-          const statusBadge = isFree ? '🟢 [จอว่าง พร้อมขาย]' : '🔴 [กำลังใช้งาน]';
-          slotOptionsHtml += `<option value="${accIdx}-${scIdx}">${acc.email} ➔ ${sc.name} (PIN: ${sc.pin}) ${statusBadge}</option>`;
-        });
-      });
+      const slotOptionsHtml = buildSlotOptionsHtml();
 
       blockDiv.innerHTML = `
         <div class="flex justify-between items-center">
@@ -361,16 +420,23 @@
     }
 
     function onSlotSelected(id) {
-      const val = document.getElementById(`select-slot-${id}`).value;
+      const selectEl = document.getElementById(`select-slot-${id}`);
+      const val = selectEl.value;
       const previewDiv = document.getElementById(`slot-preview-${id}`);
       if (!val) {
+        document.getElementById(`hidden-acc-${id}`).value = '';
+        document.getElementById(`hidden-sc-${id}`).value = '';
         previewDiv.classList.add('hidden');
         return;
       }
 
       const [accIdx, scIdx] = val.split('-');
       const acc = netflixMasterStore[accIdx];
-      const sc = acc.screens[scIdx];
+      const sc = acc ? acc.screens[scIdx] : null;
+      if (!acc || !sc) {
+        previewDiv.classList.add('hidden');
+        return;
+      }
 
       document.getElementById(`pass-${id}`).value = acc.pass;
       document.getElementById(`pin-${id}`).value = sc.pin;
@@ -399,7 +465,7 @@
       const email = document.getElementById('accEmail').value.trim();
       const pass = document.getElementById('accPass').value.trim();
       const cost = parseFloat(document.getElementById('accCost').value) || 0;
-      const totalDays = parseInt(document.getElementById('accTotalDays').value) || 30;
+      const totalDays = parseInt(document.getElementById('accTotalDays').value, 10) || 30;
       const expDate = document.getElementById('accExpDate').value;
 
       if (!email || !pass || !expDate) {
@@ -421,10 +487,12 @@
         return;
       }
 
-      if (editingIndex >= 0) {
+      if (editingIndex >= 0 && netflixMasterStore[editingIndex]) {
+        const oldScreens = netflixMasterStore[editingIndex].screens || [];
         screens.forEach((sc, idx) => {
-          if (netflixMasterStore[editingIndex].screens[idx]) {
-            sc.status = netflixMasterStore[editingIndex].screens[idx].status;
+          if (oldScreens[idx]) {
+            sc.status = oldScreens[idx].status === 'free' ? 'free' : 'busy';
+            sc.buyerExp = sc.status === 'busy' ? (oldScreens[idx].buyerExp || expDate) : '';
           }
         });
         netflixMasterStore[editingIndex] = { id: netflixMasterStore[editingIndex].id, email, pass, cost, totalDays, expDate, screens };
@@ -452,10 +520,10 @@
         const tr = document.createElement('tr');
         tr.className = "border-b border-pink-50 text-gray-600";
         tr.innerHTML = `
-          <td class="py-2 truncate max-w-[120px] font-semibold text-pink-600">${acc.email}<br><span class="text-[10px] text-gray-400 font-normal">ทุน: ${acc.cost}฿</span></td>
+          <td class="py-2 truncate max-w-[120px] font-semibold text-pink-600">${escapeHtml(acc.email)}<br><span class="text-[10px] text-gray-400 font-normal">ทุน: ${acc.cost}฿</span></td>
           <td class="py-2 text-center">${acc.screens.length} จอ</td>
-          <td class="py-2 text-center text-[10px]">${acc.expDate}</td>
-          <td class="py-2 text-right space-x-1">
+          <td class="py-2 text-center text-[10px]">${escapeHtml(acc.expDate)}</td>
+          <td class="py-2 text-right space-x-1 whitespace-nowrap">
             <button type="button" onclick="editAccount(${idx})" class="text-[10px] bg-pink-100 text-pink-700 px-1.5 py-0.5 rounded-lg">แก้ไข</button>
             <button type="button" onclick="deleteAccount(${idx})" class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-lg">ลบ</button>
           </td>
@@ -465,8 +533,9 @@
     }
 
     function editAccount(index) {
-      editingIndex = index;
       const acc = netflixMasterStore[index];
+      if (!acc) return;
+      editingIndex = index;
 
       document.getElementById('accEmail').value = acc.email;
       document.getElementById('accPass').value = acc.pass;
@@ -506,16 +575,33 @@
         saveStoreToLocal();
         renderStoreTable();
         if (editingIndex === index) cancelAccountEdit();
+        else if (editingIndex > index) editingIndex--;
       }
     }
 
     function calculateExpDate() {
-      const daysAdd = parseInt(document.getElementById('daysSelect').value);
+      const daysAdd = parseInt(document.getElementById('daysSelect').value, 10);
       const targetDate = new Date();
       targetDate.setDate(targetDate.getDate() + daysAdd);
       const day = String(targetDate.getDate()).padStart(2, '0');
       const month = String(targetDate.getMonth() + 1).padStart(2, '0');
       document.getElementById('expDate').value = `${day} / ${month} - 22:00 น.`;
+    }
+
+    function copyTextFallback(text, onSuccess) {
+      const outputEl = document.getElementById('output');
+      outputEl.value = text;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(onSuccess).catch(() => {
+          outputEl.select();
+          try { document.execCommand('copy'); } catch (e) {}
+          onSuccess();
+        });
+      } else {
+        outputEl.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        onSuccess();
+      }
     }
 
     function generateText(event) {
@@ -527,8 +613,8 @@
       const salePrice = parseFloat(document.getElementById('salePrice').value) || 0;
 
       const blocks = document.getElementById('formBlocksContainer').children;
-      let fullOutput = [];
-      let newSalesCount = 0;
+      let selectedSlots = [];
+      let seenSlotKeys = new Set();
 
       for (let i = 0; i < blocks.length; i++) {
         const block = blocks[i];
@@ -537,8 +623,27 @@
 
         if (accIdx === "" || scIdx === "") continue;
 
-        const acc = netflixMasterStore[accIdx];
-        const sc = acc.screens[scIdx];
+        const slotKey = `${accIdx}-${scIdx}`;
+        if (seenSlotKeys.has(slotKey)) {
+          alert('มีการเลือกบัญชีและจอซ้ำกันในฟอร์ม กรุณาตรวจสอบอีกครั้งนะคะ 🧸');
+          return;
+        }
+        seenSlotKeys.add(slotKey);
+        selectedSlots.push({ accIdx, scIdx });
+      }
+
+      if (selectedSlots.length === 0) {
+        alert('กรุณาเลือกบัญชีและจออย่างน้อย 1 ฟอร์มก่อนกดสร้างข้อความนะคะ 🧸');
+        return;
+      }
+
+      let fullOutput = [];
+      let newSalesCount = 0;
+
+      selectedSlots.forEach((slot, i) => {
+        const acc = netflixMasterStore[slot.accIdx];
+        const sc = acc ? acc.screens[slot.scIdx] : null;
+        if (!acc || !sc) return;
 
         sc.status = 'busy';
         sc.buyerExp = expDate;
@@ -582,24 +687,19 @@
           email: acc.email,
           screen: sc.name,
           price: salePrice,
-          cost: acc.cost / acc.screens.length,
+          cost: acc.screens.length > 0 ? (acc.cost / acc.screens.length) : 0,
           date: dateStr
         });
         newSalesCount++;
-      }
-
-      if (fullOutput.length === 0) {
-        alert('กรุณาเลือกบัญชีและจออย่างน้อย 1 ฟอร์มก่อนกดสร้างข้อความนะคะ 🧸');
-        return;
-      }
+      });
 
       saveStoreToLocal();
       saveSalesToLocal();
+      refreshAllFormSlotOptions();
       updateProfitDashboard();
 
       const finalText = fullOutput.join("\n\n");
-      document.getElementById('output').value = finalText;
-      navigator.clipboard.writeText(finalText).then(() => {
+      copyTextFallback(finalText, () => {
         alert(`สร้างข้อความและบันทึกยอดขาย ${newSalesCount} รายการเรียบร้อยแล้วค่ะ! 🌸`);
       });
     }
@@ -613,23 +713,24 @@
         return;
       }
 
-      netflixMasterStore.forEach(acc => {
-        acc.screens.forEach(sc => {
+      netflixMasterStore.forEach((acc, accIdx) => {
+        acc.screens.forEach((sc, scIdx) => {
           const isFree = sc.status === 'free';
           const statusBg = isFree ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-pink-50 border-pink-200 text-pink-700';
-          const statusText = isFree ? '🟢 สถานะ: จอว่างพร้อมขายทันที' : `🔴 สถานะ: ใช้งานอยู่ (หมดอายุ: ${sc.buyerExp})`;
+          const expLabel = sc.buyerExp || acc.expDate || '-';
+          const statusText = isFree ? '🟢 สถานะ: จอว่างพร้อมขายทันที' : `🔴 สถานะ: ใช้งานอยู่ (หมดอายุ: ${escapeHtml(expLabel)})`;
 
           const card = document.createElement('div');
-          card.className = `p-3.5 rounded-3xl border ${statusBg} text-xs flex justify-between items-center`;
+          card.className = `p-3.5 rounded-3xl border ${statusBg} text-xs flex justify-between items-center gap-2`;
           card.innerHTML = `
-            <div>
+            <div class="min-w-0">
               <span class="font-bold text-pink-600">[NETFLIX]</span> 
-              <span class="font-semibold text-gray-700">${acc.email}</span><br>
-              <span class="text-gray-600">จอ: <b>${sc.name}</b> | PIN: <b>${sc.pin}</b></span><br>
+              <span class="font-semibold text-gray-700 break-all">${escapeHtml(acc.email)}</span><br>
+              <span class="text-gray-600">จอ: <b>${escapeHtml(sc.name)}</b> | PIN: <b>${escapeHtml(sc.pin)}</b></span><br>
               <span class="text-[11px] font-medium">${statusText}</span>
             </div>
-            <div>
-              <button onclick="toggleSlotStatus('${acc.email}', '${sc.name}')" class="px-3 py-1 rounded-2xl text-[11px] font-bold ${isFree ? 'bg-emerald-500 text-white' : 'bg-pink-500 text-white'}">
+            <div class="shrink-0">
+              <button type="button" onclick="toggleSlotStatus(${accIdx}, ${scIdx})" class="px-3 py-1 rounded-2xl text-[11px] font-bold ${isFree ? 'bg-emerald-500 text-white' : 'bg-pink-500 text-white'}">
                 ${isFree ? 'ว่าง' : 'เคลียร์เป็นว่าง'}
               </button>
             </div>
@@ -639,17 +740,18 @@
       });
     }
 
-    function toggleSlotStatus(email, screenName) {
-      netflixMasterStore.forEach(acc => {
-        if (acc.email === email) {
-          acc.screens.forEach(sc => {
-            if (sc.name === screenName) {
-              sc.status = sc.status === 'free' ? 'busy' : 'free';
-              if (sc.status === 'free') sc.buyerExp = '';
-            }
-          });
-        }
-      });
+    function toggleSlotStatus(accIdx, scIdx) {
+      const acc = netflixMasterStore[accIdx];
+      const sc = acc ? acc.screens[scIdx] : null;
+      if (!acc || !sc) return;
+
+      sc.status = sc.status === 'free' ? 'busy' : 'free';
+      if (sc.status === 'free') {
+        sc.buyerExp = '';
+      } else if (!sc.buyerExp) {
+        sc.buyerExp = document.getElementById('expDate')?.value || acc.expDate || '';
+      }
+
       saveStoreToLocal();
       renderScreenCalendar();
     }
@@ -659,8 +761,8 @@
       let totalCost = 0;
 
       salesHistory.forEach(item => {
-        totalRev += item.price;
-        totalCost += item.cost || 0;
+        totalRev += Number(item.price) || 0;
+        totalCost += Number(item.cost) || 0;
       });
 
       let netProfit = totalRev - totalCost;
@@ -672,6 +774,8 @@
     }
 
     function renderCharts(rev, cost) {
+      if (typeof Chart === 'undefined') return;
+
       if (chartInstances.pie) chartInstances.pie.destroy();
       const ctxPie = document.getElementById('pieChart').getContext('2d');
       chartInstances.pie = new Chart(ctxPie, {
@@ -679,7 +783,7 @@
         data: {
           labels: ['ยอดขายรวม', 'ต้นทุนรวม'],
           datasets: [{
-            data: [rev || 1, cost || 1],
+            data: (rev === 0 && cost === 0) ? [1, 1] : [rev, cost],
             backgroundColor: ['#f472b6', '#a7f3d0']
           }]
         },
@@ -688,7 +792,7 @@
 
       let accSales = {};
       salesHistory.forEach(s => {
-        accSales[s.email] = (accSales[s.email] || 0) + s.price;
+        accSales[s.email] = (accSales[s.email] || 0) + (Number(s.price) || 0);
       });
 
       if (chartInstances.bar) chartInstances.bar.destroy();
@@ -708,7 +812,7 @@
 
       let dateSales = {};
       salesHistory.forEach(s => {
-        dateSales[s.date] = (dateSales[s.date] || 0) + s.price;
+        dateSales[s.date] = (dateSales[s.date] || 0) + (Number(s.price) || 0);
       });
 
       if (chartInstances.line) chartInstances.line.destroy();
