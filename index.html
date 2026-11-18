@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -42,7 +42,7 @@
     <!-- Header -->
     <div class="text-center mb-5">
       <h1 class="text-xl sm:text-2xl font-bold text-pink-600">🌸 ระบบจัดการ Netflix 4K ละมุนนี 🧸🍿</h1>
-      <p class="text-xs text-gray-400 mt-1">ครบ 5 จอ ➔ ฟิกจอทีวี ➔ คำนวณราคาขายอัตโนมัติ ➔ ปรับฟอร์มได้ตามใจ</p>
+      <p class="text-xs text-gray-400 mt-1">ครบ 5 จอ ➔ ฟิกจอทีวี ➔ แจ้งเตือนหมดอายุ & เช็คจอว่าง ➔ คำนวณราคาอัตโนมัติ</p>
     </div>
 
     <!-- เมนูหลักสลับหน้า (Tabs) -->
@@ -54,7 +54,7 @@
         📦 คลัง 5 จอ
       </button>
       <button type="button" id="navCalendarBtn" onclick="switchTab('calendar')" class="py-2.5 font-semibold rounded-xl transition text-gray-500 hover:text-pink-600">
-        📅 จอว่าง
+        📅 จอว่าง/แจ้งเตือน
       </button>
       <button type="button" id="navTemplateBtn" onclick="switchTab('template')" class="py-2.5 font-semibold rounded-xl transition text-gray-500 hover:text-pink-600">
         ✏️ ปรับฟอร์ม
@@ -115,7 +115,7 @@
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">2. ระยะเวลาที่ลูกค้าซื้อ (1 - 30 วัน)</label>
             <select id="daysSelect" onchange="onDeviceOrDaysChange()" class="w-full px-3 py-2 text-xs rounded-2xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-300 bg-white">
-              <!-- ตัวเลือก 1-30 วันจะถูกสร้างด้วย JS -->
+              <!-- ตัวเลือก 1-30 วันสร้างด้วย JS -->
             </select>
           </div>
         </div>
@@ -272,11 +272,14 @@
       </div>
     </div>
 
-    <!-- ================= TAB 3: ปฏิทินจอว่าง ================= -->
+    <!-- ================= TAB 3: ปฏิทินจอว่าง & แจ้งเตือนหมดอายุ ================= -->
     <div id="sectionCalendar" class="hidden space-y-3 text-xs">
+      <!-- กล่องสรุปแจ้งเตือนด่วน -->
+      <div id="alertBannerContainer"></div>
+
       <div class="bg-pink-50 border border-pink-200 p-4 rounded-3xl">
-        <p class="font-bold text-pink-800 mb-1">📅 ปฏิทินเช็คสถานะทั้ง 5 จอ (แยกจอทีวี & จอมือถือชัดเจน):</p>
-        <p class="text-gray-500">ดูได้ทันทีว่าจอไหนว่างพร้อมขาย หรือกดปุ่มเพื่อเปลี่ยนสถานะจอได้ตลอดเวลา</p>
+        <p class="font-bold text-pink-800 mb-1">📅 เช็คสถานะ 5 จอ & เวลาว่าง (บอกวันที่ว่างชัดเจน):</p>
+        <p class="text-gray-500">ดูได้ทันทีว่าจอไหนว่างพร้อมขาย หรือหากมีคนเช่าอยู่จะแสดงวันหมดอายุและเวลาว่างบอกไว้ชัดเจน</p>
       </div>
 
       <div class="max-h-96 overflow-y-auto space-y-2.5" id="calendarContainer"></div>
@@ -397,7 +400,6 @@
 
     let customTemplate = DEFAULT_TEMPLATE;
 
-    // ตารางราคาขายตัวแทนตามที่กำหนด
     const mobilePrices = {
       1: 5, 2: 8, 3: 11, 4: 14, 5: 17,
       6: 20, 7: 23, 8: 26, 9: 29, 10: 32,
@@ -410,7 +412,6 @@
       30: 105
     };
 
-    // ข้อมูลตัวอย่างเริ่มต้น
     let netflixMasterStore = [
       {
         id: 1,
@@ -523,6 +524,38 @@
       renderStoreTable();
       onDeviceOrDaysChange();
       updateProfitDashboard();
+      checkExpiryAlertsOnLoad();
+    }
+
+    // ฟังก์ชันเช็คแจ้งเตือนบัญชีหมดอายุหรือใกล้หมดอายุเมื่อเปิดระบบ
+    function checkExpiryAlertsOnLoad() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${year}-${month}-${day}`;
+      const todayTime = new Date(todayStr).getTime();
+
+      let expiredCount = 0;
+      let nearExpiryCount = 0;
+
+      netflixMasterStore.forEach(acc => {
+        if (!acc.expDate) return;
+        const expTime = new Date(acc.expDate).getTime();
+        const diffDays = Math.ceil((expTime - todayTime) / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+          expiredCount++;
+        } else if (diffDays <= 2) { // ใกล้หมดอายุภายใน 2 วัน
+          nearExpiryCount++;
+        }
+      });
+
+      if (expiredCount > 0 || nearExpiryCount > 0) {
+        setTimeout(() => {
+          showToast(`⚠️ มีบัญชีหมดอายุ ${expiredCount} แอค / ใกล้หมดอายุ ${nearExpiryCount} แอค!`, '🔔');
+        }, 1000);
+      }
     }
 
     function saveStoreToLocal() {
@@ -547,7 +580,6 @@
       if (tab === 'profit') updateProfitDashboard();
     }
 
-    // สร้าง options ของจอ โดยเชื่อมโยงวันหมดอายุบัญชีแม่และวันเหลือพอขาย
     function buildSlotOptionsHtml() {
       const selectedDevice = document.querySelector('input[name="device"]:checked').value;
       const wantTv = (selectedDevice === 'ทีวี');
@@ -586,10 +618,10 @@
             statusBadge = `🔴 [บัญชีเหลือ ${remainingDays} วัน ไม่พอขาย ${requestedDays} วัน]`;
             isDisabled = true;
           } else if (sc.status !== 'free') {
-            statusBadge = '🔴 [ไม่ว่าง/มีผู้ใช้งาน]';
+            statusBadge = `🔴 [มีผู้ใช้ - ว่างวันที่ ${sc.buyerExp || 'เร็วๆนี้'}]`;
             isDisabled = true;
           } else {
-            statusBadge = '🟢 [ว่าง พร้อมขาย]';
+            statusBadge = '🟢 [ว่าง พร้อมขายทันที]';
             isDisabled = false;
           }
 
@@ -757,16 +789,23 @@
         return;
       }
 
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
       netflixMasterStore.forEach((acc, idx) => {
         const tvScreen = acc.screens.find(s => s.isTv);
         const tvLabel = tvScreen ? `${tvScreen.name} (${tvScreen.pin})` : '-';
 
+        let isExpired = acc.expDate && acc.expDate < todayStr;
+        let expBadgeClass = isExpired ? 'text-red-600 bg-red-50 border-red-200 font-bold' : 'text-gray-600';
+        let statusText = isExpired ? '🔴 หมดอายุแล้ว!' : acc.expDate;
+
         const tr = document.createElement('tr');
-        tr.className = "border-b border-pink-50 text-gray-600 hover:bg-pink-50/40 transition";
+        tr.className = `border-b border-pink-50 hover:bg-pink-50/40 transition ${isExpired ? 'bg-red-50/30' : ''}`;
         tr.innerHTML = `
-          <td class="py-2.5 truncate max-w-[130px] font-semibold text-pink-600">${acc.email}<br><span class="text-[10px] text-gray-400 font-normal">ทุน: ${acc.cost}฿ (5 จอ) | ${acc.totalDays || 30} วัน</span></td>
+          <td class="py-2.5 truncate max-w-[130px] font-semibold text-pink-600">${acc.email}<br><span class="text-[10px] text-gray-400 font-normal">ทุน: ${acc.cost}฿ (5 จอ)</span></td>
           <td class="py-2.5 text-center"><span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">📺 ${tvLabel}</span></td>
-          <td class="py-2.5 text-center text-[10px] font-medium">${acc.expDate}</td>
+          <td class="py-2.5 text-center text-[11px] font-medium"><span class="px-2 py-0.5 rounded-lg border ${expBadgeClass}">${statusText}</span></td>
           <td class="py-2.5 text-right space-x-1 relative z-10">
             <button type="button" onclick="editAccount(${idx})" class="cursor-pointer text-[11px] bg-pink-100 hover:bg-pink-200 text-pink-700 px-2.5 py-1.5 rounded-lg font-bold transition inline-block">✏️ แก้ไข</button>
             <button type="button" onclick="deleteAccount(${idx})" class="cursor-pointer text-[11px] bg-red-100 hover:bg-red-200 text-red-600 px-2.5 py-1.5 rounded-lg font-bold transition inline-block">🗑️ ลบ</button>
@@ -864,7 +903,7 @@
         const sc = acc.screens[scIdx];
 
         sc.status = 'busy';
-        sc.buyerExp = expDate;
+        sc.buyerExp = expDate; // บันทึกวันหมดอายุของลูกค้านี้ เพื่อใช้บอกว่าจอจะว่างเมื่อไหร่
 
         const headerPrefix = (i === 0) ? "" : "#";
         
@@ -953,9 +992,12 @@
       showToast('คืนค่ารูปแบบฟอร์มเริ่มต้นแล้วค่ะ', '🔄');
     }
 
+    // ฟังก์ชันเรนเดอร์หน้าปฏิทินจอว่าง + แจ้งเตือนหมดอายุ
     function renderScreenCalendar() {
       const container = document.getElementById('calendarContainer');
+      const alertContainer = document.getElementById('alertBannerContainer');
       container.innerHTML = '';
+      alertContainer.innerHTML = '';
 
       if (netflixMasterStore.length === 0) {
         container.innerHTML = '<div class="text-center py-6 text-gray-400 text-xs">ยังไม่มีบัญชีในระบบ</div>';
@@ -963,30 +1005,47 @@
       }
 
       const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const today = `${year}-${month}-${day}`;
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const todayTime = new Date(todayStr).getTime();
+
+      let alertMessages = [];
 
       netflixMasterStore.forEach(acc => {
-        const isAccExpired = acc.expDate && acc.expDate < today;
+        let isAccExpired = acc.expDate && acc.expDate < todayStr;
+        let diffDays = 999;
+        if (acc.expDate) {
+          diffDays = Math.ceil((new Date(acc.expDate).getTime() - todayTime) / (1000 * 60 * 60 * 24));
+        }
+
+        if (isAccExpired) {
+          alertMessages.push(`🔴 <b>${acc.email}</b> หมดอายุแล้ว (${acc.expDate})`);
+        } else if (diffDays <= 2 && diffDays >= 0) {
+          alertMessages.push(`⚠️ <b>${acc.email}</b> ใกล้หมดอายุในอีก ${diffDays === 0 ? 'วันนี้' : diffDays + ' วัน'} (${acc.expDate})`);
+        }
 
         acc.screens.forEach(sc => {
           const isFree = (sc.status === 'free') && !isAccExpired;
           const statusBg = isFree ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-pink-50 border-pink-200 text-pink-700';
-          let statusText = isFree ? '🟢 สถานะ: จอว่างพร้อมขายทันที' : `🔴 สถานะ: ใช้งานอยู่ (หมดอายุ: ${sc.buyerExp || 'ใช้งาน'})`;
-          if (isAccExpired) statusText = '🔴 สถานะ: บัญชีแม่หมดอายุแล้ว';
+          
+          let statusText = '';
+          if (isAccExpired) {
+            statusText = '🔴 <b>สถานะ:</b> บัญชีแม่หมดอายุแล้ว (ต้องต่ออายุ)';
+          } else if (isFree) {
+            statusText = '🟢 <b>สถานะ:</b> จอว่างพร้อมขายทันที!';
+          } else {
+            statusText = `🔴 <b>สถานะ:</b> มีผู้ใช้งานอยู่ | ⏳ <b>จอจะว่างวันที่:</b> <span class="text-pink-600 font-bold">${sc.buyerExp || 'เร็วๆนี้'}</span>`;
+          }
 
           const tvTag = sc.isTv ? '📺 [จอทีวี]' : '📱 [จอมือถือ]';
 
           const card = document.createElement('div');
-          card.className = `p-3.5 rounded-3xl border ${statusBg} text-xs flex justify-between items-center`;
+          card.className = `p-3.5 rounded-3xl border ${statusBg} text-xs flex justify-between items-center shadow-xs`;
           card.innerHTML = `
             <div>
               <span class="font-bold text-pink-600">[NETFLIX]</span> 
               <span class="font-semibold text-gray-700">${acc.email}</span><br>
               <span class="text-gray-600">${tvTag} ชื่อจอ: <b>${sc.name}</b> | PIN: <b>${sc.pin}</b></span><br>
-              <span class="text-[11px] font-medium">${statusText}</span>
+              <span class="text-[11px]">${statusText}</span>
             </div>
             <div>
               <button onclick="toggleSlotStatus('${acc.email}', '${sc.name}')" class="px-3 py-1.5 rounded-2xl text-[11px] font-bold ${isFree ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-pink-500 text-white hover:bg-pink-600'} transition shadow-sm">
@@ -997,6 +1056,18 @@
           container.appendChild(card);
         });
       });
+
+      // ถ้ามีบัญชีหมดอายุหรือใกล้หมดอายุ ให้แสดงแถบแจ้งเตือนด้านบนสุดของแท็บนี้
+      if (alertMessages.length > 0) {
+        alertContainer.innerHTML = `
+          <div class="bg-red-50 border-2 border-red-200 p-3.5 rounded-3xl text-xs space-y-1 shadow-sm">
+            <p class="font-bold text-red-700 flex items-center gap-1">🔔 แจ้งเตือนสถานะบัญชีแม่:</p>
+            <ul class="list-disc list-inside text-red-600 space-y-0.5">
+              ${alertMessages.map(msg => `<li>${msg}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
     }
 
     function toggleSlotStatus(email, screenName) {
