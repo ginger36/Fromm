@@ -3,618 +3,481 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🌸 ระบบกรอกฟอร์มอัตโนมัติของแอป Netflix 🧸</title>
+  <title>Netflix 4K • Minimal Operations Suite</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- โหลด Chart.js สำหรับวาดกราฟ -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Kanit', sans-serif;
-      background-color: #faf7fa;
-      background-image:
-        radial-gradient(at 0% 0%, rgba(251, 207, 232, 0.35) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(224, 231, 255, 0.35) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(252, 231, 243, 0.35) 0px, transparent 50%);
-      background-attachment: fixed;
+      background-color: #f8fafc;
+      color: #1e293b;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* เอฟเฟกต์ใบเสร็จกระดาษฉีกขอบหยักสไตล์ละมุนนีแบบพรีเมียม */
-    .receipt-paper {
-      position: relative;
-      background: linear-gradient(180deg, #ffffff 0%, #fff9fb 60%, #fdf8ff 100%);
-      border-left: 1px dashed #f472b6;
-      border-right: 1px dashed #f472b6;
-      box-shadow: 0 12px 28px -12px rgba(190, 24, 93, 0.14), 0 1px 3px rgba(15, 23, 42, 0.04);
-    }
-    .receipt-paper::before,
-    .receipt-paper::after {
-      content: "";
-      display: block;
-      height: 10px;
-      background-size: 16px 10px;
-      background-repeat: repeat-x;
-    }
-    .receipt-paper::before {
-      background-image: radial-gradient(circle at 8px 0, transparent 5px, #ffffff 5.5px);
-      margin: -12px -12px 8px -12px;
-    }
-    .receipt-paper::after {
-      background-image: radial-gradient(circle at 8px 10px, transparent 5px, #fdf8ff 5.5px);
-      margin: 10px -12px -12px -12px;
-    }
+    /* Minimal subtle scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-    .pro-card {
-      background: rgba(255, 255, 255, 0.94);
-      backdrop-filter: blur(18px);
-      border: 1px solid rgba(244, 114, 182, 0.22);
-      box-shadow: 0 20px 50px -20px rgba(15, 23, 42, 0.12), 0 4px 12px -4px rgba(219, 39, 119, 0.06);
+    /* Clean input & select focus transitions */
+    .minimal-input {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
     }
-
-    .pro-panel {
-      background: #ffffff;
-      border: 1px solid #f1e6ee;
-      box-shadow: 0 2px 10px -4px rgba(15, 23, 42, 0.05);
+    .minimal-input:focus {
+      background-color: #ffffff;
+      border-color: #0f172a;
+      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06);
+      outline: none;
     }
-
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #fff5f8; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb { background: #f9a8d4; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #db2777; }
   </style>
 </head>
-<body class="min-h-screen p-3 sm:p-6 flex items-center justify-center text-slate-700">
+<body class="min-h-screen py-4 px-3 sm:py-8 sm:px-6 flex justify-center items-start">
 
-  <!-- กล่องแจ้งเตือนแบบน่ารัก (Toast) -->
-  <div id="toastBox" class="fixed top-5 right-5 z-50 hidden transform transition-all duration-300 translate-y-[-20px] opacity-0">
-    <div class="bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 text-xs font-medium border border-pink-400/40 backdrop-blur-md">
-      <span id="toastIcon" class="text-base">🌸</span>
+  <!-- Toast Notification -->
+  <div id="toastBox" class="fixed top-5 right-5 z-50 hidden transform transition-all duration-300 translate-y-[-16px] opacity-0">
+    <div class="bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-lg flex items-center gap-2.5 text-xs font-medium border border-slate-700">
+      <span id="toastIcon" class="text-sm">✨</span>
       <span id="toastMsg">แจ้งเตือน</span>
     </div>
   </div>
 
-  <!-- หน้าต่างยืนยัน (Custom Confirm Modal) -->
+  <!-- Custom Confirm Modal -->
   <div id="confirmModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl border border-pink-200 text-center space-y-4">
-      <div class="w-12 h-12 mx-auto rounded-2xl bg-pink-50 border border-pink-200 flex items-center justify-center text-2xl">🧸</div>
+    <div class="bg-white rounded-3xl p-6 max-w-xs w-full shadow-xl border border-slate-100 text-center space-y-4">
+      <div class="w-11 h-11 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-xl">🧸</div>
       <p id="confirmMsg" class="text-xs text-slate-700 font-medium leading-relaxed">ต้องการทำรายการนี้ใช่ไหมคะ?</p>
       <div class="flex gap-2 pt-1">
-        <button type="button" id="confirmNoBtn" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition">ยกเลิก</button>
-        <button type="button" id="confirmYesBtn" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-rose-500 text-white text-xs font-semibold hover:from-pink-700 hover:to-rose-600 shadow-md shadow-pink-200/70 transition">ยืนยัน</button>
+        <button type="button" id="confirmNoBtn" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition">ยกเลิก</button>
+        <button type="button" id="confirmYesBtn" class="flex-1 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 transition">ยืนยัน</button>
       </div>
     </div>
   </div>
 
-  <!-- คอนเทนเนอร์หลัก -->
-  <div class="pro-card rounded-[2rem] w-full max-w-2xl p-5 sm:p-7">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-5 pb-4 border-b border-pink-100">
+  <!-- Main Minimal Container -->
+  <div class="w-full max-w-3xl bg-white rounded-[2rem] border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.03)] p-4 sm:p-8 space-y-6">
+    
+    <!-- Clean Header -->
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-slate-100">
       <div>
-        <div class="inline-flex items-center gap-1.5 bg-pink-50 border border-pink-200/80 text-pink-700 text-[10px] font-semibold px-2.5 py-0.5 rounded-full mb-1">
-          <span>🌸</span>
-          <span>Ginshopz 4K Operations Suite</span>
-          <span>🧸</span>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Ginshopz 4K Management</span>
         </div>
-        <h1 class="text-lg sm:text-xl font-bold text-slate-800 tracking-tight">
-          ระบบกรอกฟอร์มอัตโนมัติของแอป Netflix
+        <h1 class="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">
+          ระบบจัดการและส่งฟอร์ม Netflix
         </h1>
-        <p class="text-[11px] text-slate-400">กรองเมลตามวัน & อุปกรณ์อัตโนมัติ • ออกสลิปกระดาษทันที • วิเคราะห์กำไรข้ามปี</p>
       </div>
-      <div class="hidden sm:flex items-center gap-1.5 bg-rose-50/70 border border-pink-100 px-3 py-1.5 rounded-2xl text-[11px] text-pink-700 font-medium shrink-0">
-        <span>🍿</span>
-        <span>4K UHD Ready</span>
+      <div class="flex items-center gap-2 self-start sm:self-auto bg-slate-50 border border-slate-200/70 px-3.5 py-2 rounded-2xl text-xs text-slate-600">
+        <span>📱 ว่าง <strong id="headerMobileFree" class="text-slate-900">0</strong></span>
+        <span class="text-slate-300">|</span>
+        <span>📺 ว่าง <strong id="headerTvFree" class="text-slate-900">0</strong></span>
       </div>
-    </div>
+    </header>
 
-    <!-- เมนูหลักสลับหน้า (Tabs) -->
-    <div class="mb-5 bg-rose-50/70 p-1.5 rounded-2xl border border-pink-200/60 grid grid-cols-5 gap-1 text-[10px] sm:text-xs">
-      <button type="button" id="navFormBtn" onclick="switchTab('form')" class="py-2.5 font-semibold rounded-xl transition bg-pink-500 text-white shadow-sm">
-        💌 ส่งฟอร์ม
+    <!-- Minimal Pill Navigation -->
+    <nav class="bg-slate-100/80 p-1.5 rounded-2xl grid grid-cols-5 gap-1 text-[11px] sm:text-xs">
+      <button type="button" id="navFormBtn" onclick="switchTab('form')" class="py-2.5 px-2 font-medium rounded-xl transition bg-white text-slate-900 shadow-xs">
+        ส่งฟอร์ม
       </button>
-      <button type="button" id="navStoreBtn" onclick="switchTab('store')" class="py-2.5 font-semibold rounded-xl transition text-slate-600 hover:text-pink-600 hover:bg-white/70">
-        📦 คลัง 5 จอ
+      <button type="button" id="navStoreBtn" onclick="switchTab('store')" class="py-2.5 px-2 font-medium rounded-xl transition text-slate-500 hover:text-slate-900">
+        คลัง 5 จอ
       </button>
-      <button type="button" id="navCalendarBtn" onclick="switchTab('calendar')" class="py-2.5 font-semibold rounded-xl transition text-slate-600 hover:text-pink-600 hover:bg-white/70 relative">
-        📅 แจ้งเตือน
-        <span id="alertBadge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-bounce shadow-xs">!</span>
+      <button type="button" id="navCalendarBtn" onclick="switchTab('calendar')" class="py-2.5 px-2 font-medium rounded-xl transition text-slate-500 hover:text-slate-900 relative">
+        แจ้งเตือน
+        <span id="alertBadge" class="hidden absolute top-1.5 right-2 bg-rose-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-semibold">!</span>
       </button>
-      <button type="button" id="navTemplateBtn" onclick="switchTab('template')" class="py-2.5 font-semibold rounded-xl transition text-slate-600 hover:text-pink-600 hover:bg-white/70">
-        ✏️ ปรับฟอร์ม
+      <button type="button" id="navAgentsBtn" onclick="switchTab('agents')" class="py-2.5 px-2 font-medium rounded-xl transition text-slate-500 hover:text-slate-900">
+        ประวัติตัวแทน
       </button>
-      <button type="button" id="navProfitBtn" onclick="switchTab('profit')" class="py-2.5 font-semibold rounded-xl transition text-slate-600 hover:text-pink-600 hover:bg-white/70">
-        📊 กราฟกำไร
+      <button type="button" id="navTemplateBtn" onclick="switchTab('template')" class="py-2.5 px-2 font-medium rounded-xl transition text-slate-500 hover:text-slate-900">
+        แก้ฟอร์ม
       </button>
-    </div>
+    </nav>
 
-    <!-- ================= TAB 1: ฟอร์มส่งงาน & ออกสลิป ================= -->
-    <div id="sectionForm" class="space-y-4">
-      <!-- แถบตารางราคาอ้างอิงแบบย่อ -->
-      <details class="pro-panel rounded-2xl p-3 text-xs transition">
-        <summary class="font-bold text-slate-700 cursor-pointer flex justify-between items-center select-none">
-          <span>☘️ ตารางราคาขายตัวแทน (มือถือ/iPad/คอม vs ทีวี)</span>
-          <span class="text-[10px] bg-pink-50 text-pink-600 border border-pink-200 px-2.5 py-0.5 rounded-full font-semibold">ดูเรทราคา</span>
+    <!-- ================= TAB 1: ส่งฟอร์ม & สร้างข้อความอัตโนมัติ ================= -->
+    <section id="sectionForm" class="space-y-5">
+      
+      <!-- Reference Price Accordion -->
+      <details class="group bg-slate-50/70 rounded-2xl border border-slate-200/60 px-4 py-3 text-xs">
+        <summary class="font-medium text-slate-700 cursor-pointer flex justify-between items-center select-none list-none">
+          <span class="flex items-center gap-2">🏷️ ตารางเรทราคาตัวแทน (อ้างอิง)</span>
+          <span class="text-[11px] text-slate-400 group-open:rotate-180 transition-transform">▼</span>
         </summary>
-        <div class="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] bg-rose-50/40 p-3 rounded-xl border border-pink-100">
+        <div class="mt-3 pt-3 border-t border-slate-200/60 grid grid-cols-1 sm:grid-cols-2 gap-4 text-[11px]">
           <div>
-            <p class="font-bold text-pink-700 mb-1">꒰𓈒 มือถือ ไอแพด แท็บเล็ต คอม 𓈒꒱</p>
-            <div class="grid grid-cols-2 gap-x-2 text-slate-600 font-mono">
-              <span>01 วัน : 05 บาท</span><span>07 วัน : 23 บาท</span>
-              <span>02 วัน : 08 บาท</span><span>10 วัน : 30 บาท</span>
-              <span>03 วัน : 11 บาท</span><span>15 วัน : 42 บาท</span>
-              <span>05 วัน : 17 บาท</span><span>30 วัน : 75 บาท</span>
+            <p class="font-semibold text-slate-800 mb-1.5">📱 มือถือ / iPad / แท็บเล็ต / คอม</p>
+            <div class="grid grid-cols-2 gap-y-1 text-slate-600">
+              <span>01 วัน : <strong>05 ฿</strong></span><span>07 วัน : <strong>23 ฿</strong></span>
+              <span>02 วัน : <strong>08 ฿</strong></span><span>10 วัน : <strong>30 ฿</strong></span>
+              <span>03 วัน : <strong>11 ฿</strong></span><span>15 วัน : <strong>42 ฿</strong></span>
+              <span>05 วัน : <strong>17 ฿</strong></span><span>30 วัน : <strong>75 ฿</strong></span>
             </div>
           </div>
-          <div class="border-t sm:border-t-0 sm:border-l border-pink-200/70 pt-2 sm:pt-0 sm:pl-2">
-            <p class="font-bold text-purple-700 mb-1">꒰𓈒 ทีวี / กล่องแอนดรอยด์ 𓈒꒱</p>
-            <div class="grid grid-cols-2 gap-x-2 text-slate-600 font-mono">
-              <span>01 วัน : 08 บาท</span><span>07 วัน : 35 บาท</span>
-              <span>02 วัน : 13 บาท</span><span>10 วัน : 48 บาท</span>
-              <span>03 วัน : 18 บาท</span><span>15 วัน : 65 บาท</span>
-              <span>05 วัน : 27 บาท</span><span>30 วัน : 115 บาท</span>
+          <div class="sm:border-l sm:border-slate-200/70 sm:pl-4">
+            <p class="font-semibold text-slate-800 mb-1.5">📺 ทีวี / กล่องแอนดรอยด์</p>
+            <div class="grid grid-cols-2 gap-y-1 text-slate-600">
+              <span>01 วัน : <strong>08 ฿</strong></span><span>07 วัน : <strong>35 ฿</strong></span>
+              <span>02 วัน : <strong>13 ฿</strong></span><span>10 วัน : <strong>48 ฿</strong></span>
+              <span>03 วัน : <strong>18 ฿</strong></span><span>15 วัน : <strong>65 ฿</strong></span>
+              <span>05 วัน : <strong>27 ฿</strong></span><span>30 วัน : <strong>115 ฿</strong></span>
             </div>
           </div>
         </div>
-        <p class="text-[10px] text-slate-400 mt-2 text-center">* ตารางด้านบนเป็น <strong>ราคาตัวแทน</strong> (หากเลือก <strong>ราคาลูกค้า</strong> ระบบจะบวกส่วนต่างให้อัตโนมัติค่ะ)</p>
       </details>
 
-      <!-- ฟอร์มกรอกข้อมูลลูกค้า -->
-      <div class="pro-panel p-4 rounded-3xl space-y-3.5">
-        <!-- แถบสรุปสต็อกจอว่างแยกประเภท -->
-        <div class="grid grid-cols-2 gap-2.5 bg-slate-50/90 p-2 rounded-2xl border border-slate-200/70 text-xs">
-          <div class="flex items-center justify-between px-3 py-1.5 bg-white rounded-xl border border-pink-100">
-            <span class="text-slate-600 font-medium">📱 มือถือ/iPad/คอม ว่าง</span>
-            <span id="formFreeMobileCount" class="font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded-lg">0 จอ</span>
-          </div>
-          <div class="flex items-center justify-between px-3 py-1.5 bg-white rounded-xl border border-purple-100">
-            <span class="text-slate-600 font-medium">📺 ทีวี ว่าง</span>
-            <span id="formFreeTvCount" class="font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-lg">0 จอ</span>
-          </div>
-        </div>
-
-        <!-- แถวที่ 1: เลือกจำนวนวัน & ประเภทอุปกรณ์ เพื่อกรองเมลที่ขายได้ทันที -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <div>
-            <label class="block text-[11px] font-semibold text-pink-700 mb-1">1. จำนวนวันที่ต้องการซื้อ</label>
-            <select id="durationDays" onchange="onFilterCriteriaChange()" class="w-full px-3 py-2 rounded-xl border border-pink-200 text-xs bg-pink-50/30 font-semibold text-pink-700 focus:outline-none focus:border-pink-400 focus:bg-white transition">
-              <option value="1">1 วัน</option>
-              <option value="2">2 วัน</option>
-              <option value="3">3 วัน</option>
-              <option value="5">5 วัน</option>
-              <option value="7" selected>7 วัน</option>
-              <option value="10">10 วัน</option>
-              <option value="15">15 วัน</option>
-              <option value="30">30 วัน</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-pink-700 mb-1">2. เลือกอุปกรณ์</label>
-            <select id="deviceType" onchange="onFilterCriteriaChange()" class="w-full px-3 py-2 rounded-xl border border-pink-200 text-xs bg-pink-50/30 focus:outline-none focus:border-pink-400 focus:bg-white transition">
-              <option value="mobile">📱 มือถือ / iPad / คอม</option>
-              <option value="tv">📺 ทีวี (ฟิกจอ)</option>
-              <option value="all">🌟 ทุกอุปกรณ์ (ว่างทั้งหมด)</option>
-            </select>
-          </div>
-          <div class="col-span-2 sm:col-span-1">
-            <label class="block text-[11px] font-semibold text-gray-600 mb-1">เรทราคา (<span id="autoPriceBadge" class="text-pink-600 font-bold">23 บาท</span>)</label>
-            <select id="priceTier" onchange="onPriceTierChange()" class="w-full px-3 py-2 rounded-xl border border-pink-200 text-xs bg-pink-50/30 font-semibold text-pink-600 focus:outline-none focus:border-pink-400 focus:bg-white transition">
-              <option value="agent">🏷️ ราคาตัวแทน</option>
-              <option value="customer">💖 ราคาลูกค้า</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- ช่องกรอกราคาขายเอง (จะเด้งขึ้นมาเมื่อเลือก "ราคาลูกค้า") -->
-        <div id="customCustomerPriceBox" class="hidden bg-pink-50/70 border border-pink-200/90 rounded-2xl p-2.5 flex items-center justify-between gap-3">
-          <div class="text-xs">
-            <p class="font-bold text-pink-700">💖 กำหนดราคาลูกค้าเอง (บาท)</p>
-            <p class="text-[10px] text-pink-500">พิมพ์ราคาที่ขายให้ลูกค้าได้เลย ระบบจะนำไปคำนวณสลิปและยอดขายทันที</p>
-          </div>
-          <input type="number" id="customCustomerPrice" min="0" step="1" oninput="calculatePrice()" placeholder="ใส่ราคา" class="w-28 px-3 py-1.5 rounded-xl border border-pink-300 bg-white text-xs font-bold text-pink-700 text-right focus:outline-none focus:border-pink-500">
-        </div>
-
-        <!-- แถวที่ 2: บัญชีเมลที่กรองแล้ว & จอที่ว่าง & ชื่อลูกค้า -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label class="block text-[11px] font-semibold text-pink-700 mb-1">3. เลือกบัญชีเมลที่ว่าง & วันพอ</label>
-            <select id="selectAccount" onchange="onAccountSelect()" class="w-full px-3 py-2 rounded-xl border border-pink-200 text-xs bg-pink-50/30 focus:outline-none focus:border-pink-400 focus:bg-white transition">
-              <option value="">-- เลือกอีเมลที่พร้อมขาย --</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-pink-700 mb-1">4. เลือกจอที่ว่าง</label>
-            <select id="selectProfile" onchange="onProfileSelect()" class="w-full px-3 py-2 rounded-xl border border-pink-200 text-xs bg-pink-50/30 focus:outline-none focus:border-pink-400 focus:bg-white transition">
-              <option value="">-- เลือกจอว่าง --</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-gray-600 mb-1">5. ชื่อลูกค้า / ตัวแทน</label>
-            <input type="text" id="customerName" oninput="generateFormPreview()" placeholder="เช่น น้องมายด์" class="w-full px-3 py-2 rounded-xl border border-pink-200 text-xs bg-pink-50/30 focus:outline-none focus:border-pink-400 focus:bg-white transition">
-          </div>
-        </div>
-
-        <!-- แถบแสดงข้อมูลบัญชีอัตโนมัติ (เด้งขึ้นอัตโนมัติเมื่อเลือกเมลและจอ ไม่ต้องพิมพ์เอง) -->
-        <div id="autoAccountDisplayBox" class="bg-gradient-to-r from-pink-50/70 via-white to-purple-50/70 border border-pink-200/80 rounded-2xl p-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-          <div class="bg-white/90 px-3 py-2 rounded-xl border border-pink-100">
-            <span class="text-[10px] text-gray-400 block">📧 อีเมล (เด้งอัตโนมัติ)</span>
-            <span id="dispEmail" class="font-bold text-gray-800 break-all">-</span>
-          </div>
-          <div class="bg-white/90 px-3 py-2 rounded-xl border border-pink-100">
-            <span class="text-[10px] text-gray-400 block">🔑 รหัสผ่าน (เด้งอัตโนมัติ)</span>
-            <span id="dispPass" class="font-mono font-bold text-pink-600">-</span>
-          </div>
-          <div class="bg-white/90 px-3 py-2 rounded-xl border border-purple-100 flex justify-between items-center">
+      <!-- Main Form Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+        
+        <!-- Left Controls (7 cols) -->
+        <div class="md:col-span-7 space-y-4">
+          <div class="grid grid-cols-2 gap-3">
             <div>
-              <span class="text-[10px] text-gray-400 block">🔢 PIN จอ (เด้งอัตโนมัติ)</span>
-              <span id="dispPin" class="font-mono font-bold text-purple-700">-</span>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1.5">1. จำนวนวัน</label>
+              <select id="durationDays" onchange="onFilterCriteriaChange()" class="minimal-input w-full px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-800">
+                <option value="1">1 วัน</option>
+                <option value="2">2 วัน</option>
+                <option value="3">3 วัน</option>
+                <option value="5">5 วัน</option>
+                <option value="7" selected>7 วัน</option>
+                <option value="10">10 วัน</option>
+                <option value="15">15 วัน</option>
+                <option value="30">30 วัน</option>
+              </select>
             </div>
-            <span id="dispMasterLeft" class="text-[10px] bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200 text-purple-600 font-semibold">เหลือ - วัน</span>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1.5">2. อุปกรณ์</label>
+              <select id="deviceType" onchange="onFilterCriteriaChange()" class="minimal-input w-full px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-800">
+                <option value="mobile">📱 มือถือ / iPad / คอม</option>
+                <option value="tv">📺 ทีวี (ฟิกจอ)</option>
+                <option value="all">🌟 ทุกอุปกรณ์</option>
+              </select>
+            </div>
           </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1.5">3. ประเภทผู้ซื้อ (<span id="autoPriceBadge" class="text-rose-600 font-semibold">23 ฿</span>)</label>
+              <select id="priceTier" onchange="onPriceTierChange()" class="minimal-input w-full px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-800">
+                <option value="agent">🏷️ ตัวแทน</option>
+                <option value="customer">💖 ลูกค้าทั่วไป</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1.5">4. ชื่อตัวแทน / ลูกค้า</label>
+              <input type="text" id="customerName" list="knownCustomersList" oninput="generateFormPreview()" placeholder="ระบุชื่อตัวแทน/ลูกค้า" class="minimal-input w-full px-3.5 py-2.5 rounded-xl text-xs text-slate-800">
+              <datalist id="knownCustomersList"></datalist>
+            </div>
+          </div>
+
+          <!-- Custom Customer Price (Visible only when Customer tier is selected) -->
+          <div id="customCustomerPriceBox" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3">
+            <span class="text-xs font-medium text-slate-700">กำหนดราคาลูกค้า (บาท)</span>
+            <input type="number" id="customCustomerPrice" min="0" step="1" oninput="calculatePrice()" placeholder="ใส่ราคา" class="minimal-input w-28 px-3 py-1.5 rounded-lg text-xs font-semibold text-right">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1.5">5. บัญชีเมล (กรองวัน & จอว่างแล้ว)</label>
+              <select id="selectAccount" onchange="onAccountSelect()" class="minimal-input w-full px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-800">
+                <option value="">-- เลือกอีเมล --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1.5">6. จอที่ว่าง</label>
+              <select id="selectProfile" onchange="onProfileSelect()" class="minimal-input w-full px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-800">
+                <option value="">-- เลือกจอ --</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Selected Account Info Bar -->
+          <div class="bg-slate-50 border border-slate-200/70 rounded-2xl p-3.5 grid grid-cols-3 gap-2 text-xs">
+            <div class="min-w-0">
+              <span class="text-[10px] text-slate-400 block">อีเมล</span>
+              <span id="dispEmail" class="font-medium text-slate-800 truncate block">-</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block">รหัสผ่าน</span>
+              <span id="dispPass" class="font-mono font-semibold text-slate-800">-</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <div>
+                <span class="text-[10px] text-slate-400 block">PIN</span>
+                <span id="dispPin" class="font-mono font-semibold text-rose-600">-</span>
+              </div>
+              <span id="dispMasterLeft" class="text-[10px] bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-lg font-medium">- วัน</span>
+            </div>
+          </div>
+
+          <!-- Primary Submit Action -->
+          <button type="button" onclick="generateAndSaveOrder()" class="w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-medium py-3 px-5 rounded-2xl text-xs shadow-sm transition flex items-center justify-center gap-2">
+            <span>บันทึกออเดอร์ & คัดลอกฟอร์มทันที</span>
+          </button>
         </div>
 
-        <div class="flex flex-wrap gap-2 pt-1">
-          <button type="button" onclick="generateAndSaveOrder()" class="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-2.5 px-4 rounded-2xl text-xs shadow-md shadow-pink-200/80 transition flex items-center justify-center gap-1.5">
-            <span>✨ บันทึกออเดอร์ + คัดลอกฟอร์ม & ออกสลิป</span>
-          </button>
-          <button type="button" onclick="generateFormPreview()" class="bg-pink-100/80 hover:bg-pink-200/80 text-pink-700 font-semibold py-2.5 px-4 rounded-2xl text-xs transition">
-            🔄 รีเฟรช
-          </button>
-        </div>
-      </div>
-
-      <!-- กล่องผลลัพธ์ข้อความพร้อมคัดลอก + การ์ดสลิปใบเสร็จกระดาษแนบส่ง -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-start">
-        <!-- ข้อความแจ้งรหัส -->
-        <div class="space-y-1.5">
+        <!-- Right Output Preview (5 cols) -->
+        <div class="md:col-span-5 flex flex-col h-full space-y-2">
           <div class="flex justify-between items-center">
-            <span class="text-xs font-bold text-pink-700">📋 ข้อความแจ้งรหัสลูกค้า</span>
-            <button type="button" onclick="copyFormText()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded-xl shadow-2xs transition">
-              📑 คัดลอกข้อความ
+            <span class="text-xs font-medium text-slate-700">ตัวอย่างข้อความพร้อมส่ง</span>
+            <button type="button" onclick="copyFormText()" class="text-[11px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-lg transition">
+              คัดลอกข้อความ
             </button>
           </div>
-          <textarea id="outputPreview" rows="9" class="w-full p-3 rounded-2xl border-2 border-pink-100 bg-white text-[11px] text-gray-700 leading-relaxed focus:outline-none focus:border-pink-300 shadow-2xs"></textarea>
+          <textarea id="outputPreview" rows="13" class="minimal-input w-full p-3.5 rounded-2xl text-[11px] text-slate-700 leading-relaxed font-normal flex-1 resize-none"></textarea>
         </div>
 
-        <!-- สลิปใบเสร็จกระดาษฉีกขอบหยักพร้อมรูปภาพและข้อความแนบ -->
-        <div class="space-y-1.5">
-          <div class="flex justify-between items-center">
-            <span class="text-xs font-bold text-purple-700">🧾 สลิปยืนยันการสั่งซื้อ</span>
-            <div class="flex gap-1">
-              <button type="button" onclick="copySlipText()" class="bg-purple-500 hover:bg-purple-600 text-white text-[10px] font-semibold px-2 py-1 rounded-xl shadow-2xs transition">
-                📋 คัดลอกสลิป
-              </button>
-              <button type="button" onclick="downloadSlipImage()" class="bg-indigo-500 hover:bg-indigo-600 text-white text-[10px] font-semibold px-2 py-1 rounded-xl shadow-2xs transition">
-                🖼️ บันทึกรูปสลิป
-              </button>
-            </div>
-          </div>
-
-          <!-- ตัวอย่างสลิปกระดาษขอบหยัก -->
-          <div id="digitalSlipCard" class="receipt-paper rounded-xl p-3 text-[11px] space-y-1.5">
-            <div class="text-center border-b border-dashed border-pink-300 pb-1.5">
-              <p class="font-bold text-pink-600 text-xs">🌸 E-SLIP ยืนยันการสั่งซื้อ 🧸</p>
-              <p id="slipTimestamp" class="text-[10px] text-gray-400">วันที่ทำรายการ: -</p>
-            </div>
-            <div class="space-y-1 text-gray-700">
-              <div class="flex justify-between">
-                <span class="text-gray-400">👤 ชื่อผู้ซื้อ:</span>
-                <span id="slipCustomer" class="font-bold text-gray-800">-</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-400">🎬 รายการ:</span>
-                <span id="slipPackage" class="font-semibold text-pink-600">Netflix 4K (7 วัน)</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-400">📱 อุปกรณ์/จอ:</span>
-                <span id="slipDevice" class="font-medium">-</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-400">📅 วันหมดอายุ:</span>
-                <span id="slipExpire" class="font-bold text-purple-700">-</span>
-              </div>
-              <div class="flex justify-between items-center border-t border-dashed border-pink-300 pt-1.5 mt-1">
-                <span class="font-bold text-gray-700">💰 ยอดชำระสุทธิ:</span>
-                <span id="slipAmount" class="text-sm font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">0 บาท</span>
-              </div>
-            </div>
-          </div>
-          <!-- ซ่อน Canvas สำหรับสร้างไฟล์รูปสลิป -->
-          <canvas id="slipExportCanvas" width="420" height="320" class="hidden"></canvas>
-        </div>
       </div>
-    </div>
+    </section>
 
     <!-- ================= TAB 2: คลัง 5 จอ ================= -->
-    <div id="sectionStore" class="hidden space-y-4">
-      <!-- เพิ่มบัญชีใหม่เข้าคลัง -->
-      <div class="bg-white/95 p-4 rounded-3xl border border-purple-200/80 shadow-2xs space-y-3">
-        <div class="flex items-center justify-between">
-          <h3 class="text-xs font-bold text-purple-700">➕ เพิ่มบัญชี Netflix 4K เข้าคลัง (1 บ้าน = 5 จอ)</h3>
-          <span class="text-[10px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full border border-purple-200">ตั้งค่าได้ครบ 5 จอ</span>
+    <section id="sectionStore" class="hidden space-y-5">
+      
+      <!-- Add Account Accordion / Card -->
+      <details class="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-4" open>
+        <summary class="text-xs font-semibold text-slate-800 cursor-pointer flex justify-between items-center select-none list-none">
+          <span>➕ เพิ่มบัญชี Netflix 4K ใหม่เข้าคลัง (5 จอ)</span>
+          <span class="text-[11px] text-slate-400">คลิกเพื่อพับ/กาง</span>
+        </summary>
+        
+        <div class="mt-4 space-y-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1">อีเมลบัญชีแม่</label>
+              <input type="text" id="newAccEmail" placeholder="example@gmail.com" class="minimal-input w-full px-3 py-2 rounded-xl text-xs bg-white">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1">รหัสผ่าน</label>
+              <input type="text" id="newAccPass" placeholder="รหัสผ่าน" class="minimal-input w-full px-3 py-2 rounded-xl text-xs bg-white">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1">ต้นทุนรับมา (บาท)</label>
+              <input type="number" id="newAccCost" value="320" class="minimal-input w-full px-3 py-2 rounded-xl text-xs bg-white">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-500 mb-1">วันหมดอายุบัญชีแม่</label>
+              <input type="date" id="newAccExpire" class="minimal-input w-full px-3 py-2 rounded-xl text-xs bg-white">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-slate-500 mb-1.5">ตั้งค่าโปรไฟล์ทั้ง 5 จอ</label>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              <div class="bg-white p-2 rounded-xl border border-slate-200/80 space-y-1.5 text-center">
+                <span class="text-[10px] font-semibold text-slate-500 block">จอ 1</span>
+                <input type="text" id="name1" value="จอ 1" class="minimal-input w-full px-1.5 py-1 rounded-lg text-[11px] text-center">
+                <input type="text" id="pin1" value="1111" class="minimal-input w-full px-1.5 py-1 rounded-lg text-[11px] text-center font-mono">
+                <label class="flex items-center justify-center gap-1 text-[10px] text-slate-600 cursor-pointer"><input type="checkbox" id="tv1" class="accent-slate-900"> ฟิกทีวี</label>
+              </div>
+              <div class="bg-white p-2 rounded-xl border border-slate-200/80 space-y-1.5 text-center">
+                <span class="text-[10px] font-semibold text-slate-500 block">จอ 2</span>
+                <input type="text" id="name2" value="จอ 2" class="minimal-input w-full px-1.5 py-1 rounded-lg text-[11px] text-center">
+                <input type="text" id="pin2" value="2222" class="minimal-input w-full px-1.5 py-1 rounded-lg text-[11px] text-center font-mono">
+                <label class="flex items-center justify-center gap-1 text-[10px] text-slate-600 cursor-pointer"><input type="checkbox" id="tv2" class="accent-slate-900"> ฟิกทีวี</label>
+              </div>
+              <div class="bg-white p-2 rounded-xl border border-slate-200/80 space-y-1.5 text-center">
+                <span class="text-[10px] font-semibold text-slate-500 block">จอ 3</span>
+                <input type="text" id="name3" value="จอ 3" class="minimal-input w-full px-1.5 py-1 rounded-lg text-[11px] text-center">
+                <input type="text" id="pin3" value="3333" class="minimal-input w-full px-1.5 py-1 rounded-lg text-[11px] text-center font-mono">
+                <label class="flex items-center justify-center gap-1 text-[10px] text-slate-600 cursor-pointer"><input type="checkbox" id="tv3" class="accent-slate-900"> ฟิกทีวี</label>
+              </div>
+              <div class="bg-white p-2 rounded-xl border border-slate-200/80 space-y-1.5 text-center">
+                <span class="text-[10px] font-semibold text-slate-500 block">จอ 4</span>
+                <input type="text" id="name4" value="จอ 4" class="minimal-input w-full px-1.5 py-1 rounded-lg text-[11px] text-center">
+                <input type="text" id="pin4" value="4444" class="minimal-input w-full px-1.5 py-1 rounded-lg text-[11px] text-center font-mono">
+                <label class="flex items-center justify-center gap-1 text-[10px] text-slate-600 cursor-pointer"><input type="checkbox" id="tv4" class="accent-slate-900"> ฟิกทีวี</label>
+              </div>
+              <div class="bg-white p-2 rounded-xl border border-slate-200/80 space-y-1.5 text-center">
+                <span class="text-[10px] font-semibold text-slate-500 block">จอ 5</span>
+                <input type="text" id="name5" value="จอ 5 (TV)" class="minimal-input w-full px-1.5 py-1 rounded-lg text-[11px] text-center">
+                <input type="text" id="pin5" value="5555" class="minimal-input w-full px-1.5 py-1 rounded-lg text-[11px] text-center font-mono">
+                <label class="flex items-center justify-center gap-1 text-[10px] text-slate-600 cursor-pointer"><input type="checkbox" id="tv5" checked class="accent-slate-900"> ฟิกทีวี</label>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" onclick="addAccount()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-xl text-xs transition">
+            บันทึกบัญชีเข้าคลัง
+          </button>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-[10px] font-semibold text-purple-700 mb-0.5">อีเมลบัญชีแม่</label>
-            <input type="text" id="newAccEmail" placeholder="อีเมลบัญชี Netflix" class="w-full px-3 py-2 rounded-xl border border-purple-200 text-xs bg-purple-50/30 focus:bg-white focus:outline-none transition">
-          </div>
-          <div>
-            <label class="block text-[10px] font-semibold text-purple-700 mb-0.5">รหัสผ่าน</label>
-            <input type="text" id="newAccPass" placeholder="รหัสผ่าน" class="w-full px-3 py-2 rounded-xl border border-purple-200 text-xs bg-purple-50/30 focus:bg-white focus:outline-none transition">
-          </div>
-          <div>
-            <label class="block text-[10px] font-semibold text-purple-700 mb-0.5">ต้นทุนหาร/รับมา (บาท)</label>
-            <input type="number" id="newAccCost" placeholder="ต้นทุน (บาท)" value="320" class="w-full px-3 py-2 rounded-xl border border-purple-200 text-xs bg-purple-50/30 focus:bg-white focus:outline-none transition">
-          </div>
-          <div>
-            <label class="block text-[10px] font-semibold text-purple-700 mb-0.5">วันหมดอายุแอคแม่ (รองรับข้ามเดือน/ข้ามปี)</label>
-            <input type="date" id="newAccExpire" class="w-full px-3 py-2 rounded-xl border border-purple-200 text-xs bg-purple-50/30 focus:bg-white focus:outline-none transition">
-          </div>
+      </details>
+
+      <!-- Account List -->
+      <div id="accountListContainer" class="space-y-3 max-h-[460px] overflow-y-auto pr-1"></div>
+    </section>
+
+    <!-- ================= TAB 3: แจ้งเตือนหมดอายุ & จอว่าง ================= -->
+    <section id="sectionCalendar" class="hidden space-y-4">
+      
+      <!-- Filter Summary Cards -->
+      <div class="grid grid-cols-3 gap-2.5">
+        <button type="button" id="filterAllBtn" onclick="setAlertFilter('all')" class="bg-slate-50 border-2 border-slate-900 p-3 rounded-2xl text-left transition">
+          <p class="text-[11px] text-slate-500 font-medium">จอทั้งหมด</p>
+          <p id="statAllSlots" class="text-lg sm:text-xl font-semibold text-slate-900 mt-0.5">0</p>
+        </button>
+        <button type="button" id="filterFreeBtn" onclick="setAlertFilter('free')" class="bg-slate-50 border-2 border-transparent hover:border-slate-200 p-3 rounded-2xl text-left transition">
+          <p class="text-[11px] text-emerald-600 font-medium">จอว่างพร้อมขาย</p>
+          <p id="statFreeSlots" class="text-lg sm:text-xl font-semibold text-emerald-700 mt-0.5">0</p>
+        </button>
+        <button type="button" id="filterExpiringBtn" onclick="setAlertFilter('expiring')" class="bg-slate-50 border-2 border-transparent hover:border-slate-200 p-3 rounded-2xl text-left transition">
+          <p class="text-[11px] text-rose-600 font-medium">ใกล้หมดอายุ</p>
+          <p id="statExpiringSlots" class="text-lg sm:text-xl font-semibold text-rose-600 mt-0.5">0</p>
+        </button>
+      </div>
+
+      <!-- Master Account Expiry Status -->
+      <div id="masterExpiryAlertBox"></div>
+
+      <!-- Slots Expiry / Availability List -->
+      <div class="space-y-2.5">
+        <div class="flex justify-between items-center">
+          <h3 id="alertListTitle" class="text-xs font-semibold text-slate-800">สถานะจอทั้งหมด</h3>
+          <span id="alertGlobalSellableDays" class="text-[11px] text-slate-500"></span>
         </div>
+        <div id="expiryListContainer" class="space-y-2 max-h-[380px] overflow-y-auto pr-1"></div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: ประวัติการสั่งซื้อตัวแทน & ยอดขายรายเดือน ================= -->
+    <section id="sectionAgents" class="hidden space-y-5">
+      
+      <!-- Top Filter Bar (Filter by Month or All Time) -->
+      <div class="bg-slate-50 border border-slate-200/80 p-3.5 rounded-2xl flex flex-wrap justify-between items-center gap-3">
         <div>
-          <label class="block text-[10px] font-semibold text-purple-700 mb-1">ตั้งค่าชื่อจอ, PIN และฟิกจอทีวี (จอ 1 - 5)</label>
-          <div class="grid grid-cols-1 sm:grid-cols-5 gap-1.5">
-            <div class="bg-purple-50/40 p-1.5 rounded-xl border border-purple-200/80 space-y-1 text-center">
-              <span class="text-[10px] font-bold text-purple-700 block">จอ 1</span>
-              <input type="text" id="name1" placeholder="ชื่อจอ 1" value="จอ 1" class="w-full px-1.5 py-1 rounded-lg border border-purple-100 text-[10px] text-center bg-white">
-              <input type="text" id="pin1" placeholder="PIN" value="1111" class="w-full px-1.5 py-1 rounded-lg border border-purple-100 text-[10px] text-center font-mono bg-white">
-              <label class="flex items-center justify-center gap-1 text-[9px] text-purple-600 cursor-pointer"><input type="checkbox" id="tv1" class="accent-purple-600"> ฟิกทีวี</label>
-            </div>
-            <div class="bg-purple-50/40 p-1.5 rounded-xl border border-purple-200/80 space-y-1 text-center">
-              <span class="text-[10px] font-bold text-purple-700 block">จอ 2</span>
-              <input type="text" id="name2" placeholder="ชื่อจอ 2" value="จอ 2" class="w-full px-1.5 py-1 rounded-lg border border-purple-100 text-[10px] text-center bg-white">
-              <input type="text" id="pin2" placeholder="PIN" value="2222" class="w-full px-1.5 py-1 rounded-lg border border-purple-100 text-[10px] text-center font-mono bg-white">
-              <label class="flex items-center justify-center gap-1 text-[9px] text-purple-600 cursor-pointer"><input type="checkbox" id="tv2" class="accent-purple-600"> ฟิกทีวี</label>
-            </div>
-            <div class="bg-purple-50/40 p-1.5 rounded-xl border border-purple-200/80 space-y-1 text-center">
-              <span class="text-[10px] font-bold text-purple-700 block">จอ 3</span>
-              <input type="text" id="name3" placeholder="ชื่อจอ 3" value="จอ 3" class="w-full px-1.5 py-1 rounded-lg border border-purple-100 text-[10px] text-center bg-white">
-              <input type="text" id="pin3" placeholder="PIN" value="3333" class="w-full px-1.5 py-1 rounded-lg border border-purple-100 text-[10px] text-center font-mono bg-white">
-              <label class="flex items-center justify-center gap-1 text-[9px] text-purple-600 cursor-pointer"><input type="checkbox" id="tv3" class="accent-purple-600"> ฟิกทีวี</label>
-            </div>
-            <div class="bg-purple-50/40 p-1.5 rounded-xl border border-purple-200/80 space-y-1 text-center">
-              <span class="text-[10px] font-bold text-purple-700 block">จอ 4</span>
-              <input type="text" id="name4" placeholder="ชื่อจอ 4" value="จอ 4" class="w-full px-1.5 py-1 rounded-lg border border-purple-100 text-[10px] text-center bg-white">
-              <input type="text" id="pin4" placeholder="PIN" value="4444" class="w-full px-1.5 py-1 rounded-lg border border-purple-100 text-[10px] text-center font-mono bg-white">
-              <label class="flex items-center justify-center gap-1 text-[9px] text-purple-600 cursor-pointer"><input type="checkbox" id="tv4" class="accent-purple-600"> ฟิกทีวี</label>
-            </div>
-            <div class="bg-purple-50/40 p-1.5 rounded-xl border border-purple-200/80 space-y-1 text-center">
-              <span class="text-[10px] font-bold text-purple-700 block">จอ 5</span>
-              <input type="text" id="name5" placeholder="ชื่อจอ 5" value="จอ 5 (TV)" class="w-full px-1.5 py-1 rounded-lg border border-purple-100 text-[10px] text-center bg-white">
-              <input type="text" id="pin5" placeholder="PIN" value="5555" class="w-full px-1.5 py-1 rounded-lg border border-purple-100 text-[10px] text-center font-mono bg-white">
-              <label class="flex items-center justify-center gap-1 text-[9px] text-purple-600 cursor-pointer"><input type="checkbox" id="tv5" checked class="accent-purple-600"> ฟิกทีวี</label>
-            </div>
-          </div>
+          <h2 class="text-xs font-semibold text-slate-900">ประวัติการสั่งซื้อแยกตามตัวแทน / ลูกค้า</h2>
+          <p class="text-[11px] text-slate-500">คลิกที่ชื่อตัวแทนเพื่อดูรายการคำสั่งซื้อทั้งหมดตั้งแต่วันแรกจนถึงปัจจุบัน</p>
         </div>
-        <button type="button" onclick="addAccount()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2.5 rounded-xl text-xs shadow-md shadow-purple-100 transition">
-          💾 บันทึกบ้านใหม่เข้าคลัง
-        </button>
-      </div>
-
-      <!-- รายการบัญชีในคลัง -->
-      <div id="accountListContainer" class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-        <!-- Render via JS -->
-      </div>
-    </div>
-
-    <!-- ================= TAB 3: จอว่าง & แจ้งเตือนหมดอายุ ================= -->
-    <div id="sectionCalendar" class="hidden space-y-4">
-      <!-- แถบสรุปรวมทุกแอค -->
-      <div class="bg-gradient-to-r from-pink-50/90 via-purple-50/80 to-amber-50/70 border border-pink-200/80 p-3.5 rounded-2xl space-y-2 shadow-2xs">
-        <div class="flex flex-wrap justify-between items-center gap-1 text-xs">
-          <span class="font-bold text-pink-700">📊 สรุปจอว่างพร้อมขายรวมทุกบัญชีแม่</span>
-          <span id="alertGlobalSellableDays" class="text-[11px] font-bold bg-white text-indigo-700 px-2.5 py-0.5 rounded-full border border-indigo-200 shadow-2xs">
-            ขายได้: ต่ำสุด 1 วัน - สูงสุด 30 วัน
-          </span>
-        </div>
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <div class="bg-white/95 px-3 py-1.5 rounded-xl border border-pink-100 flex justify-between items-center">
-            <span class="text-pink-600 font-semibold">📱 มือถือ/iPad/คอม ว่าง:</span>
-            <span id="alertFreeMobileTotal" class="font-bold text-pink-700">0 จอ</span>
-          </div>
-          <div class="bg-white/95 px-3 py-1.5 rounded-xl border border-purple-100 flex justify-between items-center">
-            <span class="text-purple-600 font-semibold">📺 ทีวีว่างรวม:</span>
-            <span id="alertFreeTvTotal" class="font-bold text-purple-700">0 จอ</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ปุ่มการ์ดเลือกโหมดดู (คลิกสลับได้) -->
-      <div class="grid grid-cols-3 gap-2">
-        <button type="button" id="filterAllBtn" onclick="setAlertFilter('all')" class="bg-pink-50/90 border-2 border-pink-400 p-2.5 rounded-2xl text-center transition shadow-xs">
-          <p class="text-[10px] sm:text-[11px] text-pink-600 font-semibold">📋 ดูทั้งหมด</p>
-          <p id="statAllSlots" class="text-lg sm:text-xl font-bold text-pink-700 mt-0.5">0 จอ</p>
-        </button>
-        <button type="button" id="filterFreeBtn" onclick="setAlertFilter('free')" class="bg-emerald-50/90 border-2 border-transparent hover:border-emerald-300 p-2.5 rounded-2xl text-center transition">
-          <p class="text-[10px] sm:text-[11px] text-emerald-600 font-semibold">🟢 จอว่าง (คลิกดู)</p>
-          <p id="statFreeSlots" class="text-lg sm:text-xl font-bold text-emerald-700 mt-0.5">0 จอ</p>
-        </button>
-        <button type="button" id="filterExpiringBtn" onclick="setAlertFilter('expiring')" class="bg-rose-50/90 border-2 border-transparent hover:border-rose-300 p-2.5 rounded-2xl text-center transition">
-          <p class="text-[10px] sm:text-[11px] text-rose-600 font-semibold">⏰ ใกล้หมดอายุ</p>
-          <p id="statExpiringSlots" class="text-lg sm:text-xl font-bold text-rose-700 mt-0.5">0 จอ</p>
-        </button>
-      </div>
-
-      <!-- แจ้งเตือนแอคแม่ใกล้หมดอายุ -->
-      <div id="masterExpiryAlertBox" class="space-y-1.5"></div>
-
-      <!-- รายการแจ้งเตือนและจอว่าง -->
-      <div class="space-y-2">
-        <h3 id="alertListTitle" class="text-xs font-bold text-pink-700">🔔 สถานะจอทั้งหมด (เรียงตามวันหมดอายุ)</h3>
-        <div id="expiryListContainer" class="space-y-2.5 max-h-[360px] overflow-y-auto pr-1">
-          <!-- Render via JS -->
-        </div>
-      </div>
-    </div>
-
-    <!-- ================= TAB 4: ปรับแต่งเทมเพลตฟอร์ม ================= -->
-    <div id="sectionTemplate" class="hidden space-y-3">
-      <div class="bg-amber-50/80 p-3.5 rounded-2xl border border-amber-200/90 text-[11px] text-amber-800 space-y-1 shadow-2xs">
-        <p class="font-bold">💡 ตัวแปรที่ใช้แทนค่าอัตโนมัติในข้อความได้ (แยกฟอร์มทีวี vs มือถือ):</p>
-        <p class="font-mono text-[10px] leading-relaxed">
-          <span class="bg-white px-1.5 py-0.5 rounded border border-amber-200">{email}</span> = อีเมล | 
-          <span class="bg-white px-1.5 py-0.5 rounded border border-amber-200">{pass}</span> = รหัสผ่าน | 
-          <span class="bg-white px-1.5 py-0.5 rounded border border-amber-200">{profile}</span> = ชื่อจอ | 
-          <span class="bg-white px-1.5 py-0.5 rounded border border-amber-200">{pin}</span> = รหัส PIN | 
-          <span class="bg-white px-1.5 py-0.5 rounded border border-amber-200">{device}</span> = ประเภทอุปกรณ์ | 
-          <span class="bg-white px-1.5 py-0.5 rounded border border-amber-200">{days}</span> = จำนวนวัน (เช่น 01, 07) | 
-          <span class="bg-white px-1.5 py-0.5 rounded border border-amber-200">{expire}</span> = วันหมดอายุ (dd/mm)
-        </p>
-      </div>
-
-      <!-- ปุ่มสลับแก้ไขฟอร์มทีวี กับ ฟอร์มมือถือ -->
-      <div class="flex gap-2 bg-pink-50/80 p-1.5 rounded-2xl border border-pink-200/70">
-        <button type="button" id="editTplTvBtn" onclick="switchTemplateEditorTarget('tv')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white shadow-2xs transition">
-          📺 ฟอร์มทีวี (TV)
-        </button>
-        <button type="button" id="editTplMobileBtn" onclick="switchTemplateEditorTarget('mobile')" class="flex-1 py-2 rounded-xl text-xs font-bold text-pink-700 hover:bg-white/70 transition">
-          📱 ฟอร์มมือถือ / iPad / คอม
-        </button>
-      </div>
-
-      <textarea id="templateEditor" rows="13" class="w-full p-3.5 rounded-2xl border-2 border-pink-200 bg-white text-xs text-gray-700 leading-relaxed focus:outline-none focus:border-pink-400 shadow-2xs font-mono"></textarea>
-
-      <div class="flex gap-2">
-        <button type="button" onclick="saveTemplate()" class="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-2.5 rounded-xl text-xs shadow-md shadow-pink-100 transition">
-          💾 บันทึกรูปแบบฟอร์มที่เลือก
-        </button>
-        <button type="button" onclick="resetTemplate()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold py-2.5 px-4 rounded-xl text-xs transition">
-          ↩️ คืนค่าเริ่มต้น
-        </button>
-      </div>
-    </div>
-
-    <!-- ================= TAB 5: กราฟวิเคราะห์กำไร (ย้อนหลังหลายเดือน/หลายปี) ================= -->
-    <div id="sectionProfit" class="hidden space-y-4">
-      <!-- ตัวกรองช่วงเวลา (ดูย้อนหลังหลายเดือน / หลายปี) -->
-      <div class="bg-pink-50/80 p-3 rounded-2xl border border-pink-200/80 flex flex-wrap justify-between items-center gap-2 text-xs">
-        <div class="flex items-center gap-1.5">
-          <span class="font-bold text-pink-700">🗓️ ช่วงเวลาวิเคราะห์:</span>
-          <select id="profitPeriodMode" onchange="onProfitPeriodModeChange()" class="px-2.5 py-1 rounded-xl border border-pink-300 bg-white text-gray-700 font-semibold focus:outline-none">
-            <option value="all">🌟 สะสมทั้งหมด (ทุกปี)</option>
-            <option value="year">📆 รายปี (เปรียบเทียบ 12 เดือน)</option>
-            <option value="month">📅 เจาะจงรายเดือน</option>
+        <div class="flex items-center gap-2">
+          <select id="agentPeriodMode" onchange="onAgentPeriodModeChange()" class="minimal-input px-3 py-1.5 rounded-xl text-xs font-medium bg-white">
+            <option value="month">📅 ดูรายเดือน</option>
+            <option value="all">🌟 สะสมทั้งหมด (ทุกเดือน/ปี)</option>
           </select>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <select id="profitYearSelect" onchange="renderProfitTab()" class="hidden px-2.5 py-1 rounded-xl border border-pink-300 bg-white text-gray-700 font-semibold focus:outline-none"></select>
-          <input type="month" id="profitMonthSelect" onchange="renderProfitTab()" class="hidden px-2.5 py-1 rounded-xl border border-pink-300 bg-white text-gray-700 font-semibold focus:outline-none">
+          <input type="month" id="agentMonthFilter" onchange="renderAgentDirectory()" class="minimal-input px-3 py-1.5 rounded-xl text-xs font-medium bg-white">
         </div>
       </div>
 
-      <!-- การ์ดสรุปยอดเงิน -->
-      <div class="grid grid-cols-3 gap-2 sm:gap-3">
-        <div class="bg-gradient-to-br from-pink-50 to-white border border-pink-200 p-3 rounded-2xl text-center shadow-2xs">
-          <p class="text-[10px] sm:text-xs text-pink-600 font-semibold">💰 รายรับรวม</p>
-          <p id="totalRevenueText" class="text-base sm:text-xl font-bold text-pink-700 mt-0.5">0 ฿</p>
+      <!-- Monthly / Overall KPI Strip -->
+      <div class="grid grid-cols-3 gap-2.5">
+        <div class="bg-white border border-slate-200/80 p-3.5 rounded-2xl">
+          <p class="text-[11px] text-slate-400">ยอดขายช่วงที่เลือก</p>
+          <p id="agentTotalRevText" class="text-base sm:text-xl font-semibold text-slate-900 mt-0.5">0 ฿</p>
         </div>
-        <div class="bg-gradient-to-br from-purple-50 to-white border border-purple-200 p-3 rounded-2xl text-center shadow-2xs">
-          <p class="text-[10px] sm:text-xs text-purple-600 font-semibold">🧾 ต้นทุนรวม</p>
-          <p id="totalCostText" class="text-base sm:text-xl font-bold text-purple-700 mt-0.5">0 ฿</p>
+        <div class="bg-white border border-slate-200/80 p-3.5 rounded-2xl">
+          <p class="text-[11px] text-slate-400">กำไรสุทธิ (หักต้นทุน)</p>
+          <p id="agentNetProfitText" class="text-base sm:text-xl font-semibold text-emerald-600 mt-0.5">0 ฿</p>
         </div>
-        <div class="bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 p-3 rounded-2xl text-center shadow-2xs">
-          <p class="text-[10px] sm:text-xs text-emerald-600 font-semibold">✨ กำไรสุทธิ</p>
-          <p id="netProfitText" class="text-base sm:text-xl font-bold text-emerald-700 mt-0.5">0 ฿</p>
+        <div class="bg-white border border-slate-200/80 p-3.5 rounded-2xl">
+          <p class="text-[11px] text-slate-400">จำนวนออเดอร์</p>
+          <p id="agentOrderCountText" class="text-base sm:text-xl font-semibold text-slate-900 mt-0.5">0 รายการ</p>
         </div>
       </div>
 
-      <!-- พื้นที่แสดงกราฟเปรียบเทียบต้นทุน-กำไร และ กราฟวงกลมสลับโหมดได้ -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <!-- กราฟเปรียบเทียบรายรับ ต้นทุน และกำไร -->
-        <div class="sm:col-span-2 bg-white p-3.5 rounded-3xl border border-pink-100 shadow-2xs">
-          <div class="flex justify-between items-center mb-2">
-            <h3 id="mainChartTitle" class="text-xs font-bold text-gray-700">📈 เปรียบเทียบรายรับ - ต้นทุน - กำไร</h3>
-            <button type="button" onclick="clearHistoryPrompt()" class="text-[10px] text-rose-500 hover:underline">ล้างประวัติ</button>
+      <!-- Two Column Layout: Agent List (Left) & Selected Agent Detailed Order History (Right) -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+        
+        <!-- Left: List of Agents/Customers (5 cols) -->
+        <div class="md:col-span-5 bg-slate-50/70 border border-slate-200/70 rounded-2xl p-3 space-y-2">
+          <div class="flex justify-between items-center px-1">
+            <span class="text-xs font-semibold text-slate-700">รายชื่อตัวแทน / ลูกค้า</span>
+            <span id="agentCountBadge" class="text-[10px] text-slate-400">0 คน</span>
           </div>
-          <div class="relative w-full h-44">
+          <div id="agentDirectoryList" class="space-y-1.5 max-h-[340px] overflow-y-auto pr-1">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Right: Detailed Order Timeline of Clicked Agent (7 cols) -->
+        <div class="md:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-4 space-y-3 min-h-[260px]">
+          <div class="flex flex-wrap justify-between items-start gap-2 pb-2.5 border-b border-slate-100">
+            <div>
+              <span class="text-[10px] font-medium uppercase tracking-wider text-slate-400">รายละเอียดคำสั่งซื้อ</span>
+              <h3 id="selectedAgentTitle" class="text-sm font-semibold text-slate-900 mt-0.5">เลือกตัวแทนทางซ้ายเพื่อดูประวัติ</h3>
+              <p id="selectedAgentSubtitle" class="text-[11px] text-slate-500 mt-0.5">-</p>
+            </div>
+            <select id="selectedAgentMonthSubFilter" onchange="renderSelectedAgentOrders()" class="hidden minimal-input px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-50">
+              <option value="ALL">ทุกเดือนที่เคยสั่ง</option>
+            </select>
+          </div>
+
+          <div id="selectedAgentOrdersContainer" class="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+            <div class="text-center py-12 text-xs text-slate-400">
+              👈 คลิกเลือกชื่อตัวแทนทางด้านซ้าย<br>เพื่อดูว่าสั่งแพ็กเกจไหน วันไหน เดือนไหนบ้าง
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Collapsible Yearly Profit Chart & Clear Data -->
+      <details class="bg-slate-50/60 border border-slate-200/70 rounded-2xl p-4">
+        <summary class="text-xs font-semibold text-slate-700 cursor-pointer flex justify-between items-center select-none list-none">
+          <span>📊 กราฟสรุปยอดขายและกำไรรายเดือน</span>
+          <span class="text-[11px] text-slate-400">คลิกเพื่อดูกราฟ</span>
+        </summary>
+        <div class="mt-4 space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-[11px] text-slate-500">เปรียบเทียบรายรับ ต้นทุน และกำไรสุทธิรายเดือน</span>
+            <button type="button" onclick="clearHistoryPrompt()" class="text-[11px] text-rose-500 hover:underline">ล้างประวัติทั้งหมด</button>
+          </div>
+          <div class="relative w-full h-48 bg-white p-3 rounded-xl border border-slate-100">
             <canvas id="profitLineChart"></canvas>
           </div>
         </div>
+      </details>
 
-        <!-- กราฟวงกลมสลับโหมด (ต้นทุน vs กำไร หรือ มือถือ vs ทีวี) -->
-        <div class="bg-white p-3.5 rounded-3xl border border-pink-100 shadow-2xs flex flex-col justify-between">
-          <div class="flex justify-between items-center gap-1 mb-1">
-            <h3 id="pieChartTitle" class="text-[11px] font-bold text-gray-700">🍩 ต้นทุน vs กำไร</h3>
-            <button type="button" onclick="togglePieMode()" class="text-[9px] bg-pink-100 hover:bg-pink-200 text-pink-700 font-semibold px-2 py-0.5 rounded-lg transition">
-              🔄 สลับกราฟ
-            </button>
-          </div>
-          <div class="relative w-full h-36 flex items-center justify-center">
-            <canvas id="devicePieChart"></canvas>
-          </div>
-          <p id="pieSummaryText" class="text-[10px] text-center text-gray-500 mt-1">ต้นทุน 0฿ | กำไร 0฿</p>
-        </div>
-      </div>
+    </section>
 
-      <!-- จัดอันดับลูกค้ายอดซื้อสูงสุด (กดดูรายละเอียดสลิปที่ซื้อไปทั้งหมดได้) -->
-      <div class="bg-gradient-to-r from-amber-50/80 to-pink-50/50 p-3.5 rounded-3xl border border-amber-200/90 space-y-2.5 shadow-2xs">
-        <div class="flex flex-wrap justify-between items-center gap-2">
-          <div>
-            <h3 class="text-xs font-bold text-amber-800">👑 อันดับลูกค้ายอดซื้อสูงสุด (เรียงจากมากไปน้อย • กดดูสลิปได้)</h3>
-            <p class="text-[10px] text-amber-700/80">คลิกที่ชื่อลูกค้าเพื่อเปิดดูรายการคำสั่งซื้อและสลิปทั้งหมดของคนนั้น</p>
-          </div>
-          <input type="month" id="rankingMonthFilter" onchange="renderCustomerRanking()" class="px-2.5 py-1 rounded-xl border border-amber-300 bg-white text-gray-700 text-[11px] font-semibold focus:outline-none">
-        </div>
-        <div id="topCustomersList" class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-          <!-- Render via JS -->
-        </div>
-      </div>
-
-      <!-- 10 คนล่าสุดที่ซื้อ + เวลา & ประวัติสลิปทั้งหมด -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <!-- 10 คนล่าสุดที่ซื้อ -->
-        <div class="bg-white/95 p-3.5 rounded-3xl border border-pink-100 shadow-2xs space-y-2">
-          <div class="flex justify-between items-center">
-            <h3 class="text-xs font-bold text-pink-700">🕒 10 รายการล่าสุดที่ซื้อ</h3>
-            <span class="text-[10px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-semibold">ล่าสุด 10 คน</span>
-          </div>
-          <div id="recent10BuyersList" class="space-y-1.5 max-h-56 overflow-y-auto pr-1 text-[11px]">
-            <!-- Render via JS -->
-          </div>
-        </div>
-
-        <!-- ประวัติสลิปทั้งหมด / แยกตามเดือน -->
-        <div class="bg-white/95 p-3.5 rounded-3xl border border-pink-100 shadow-2xs space-y-2">
-          <div class="flex flex-wrap justify-between items-center gap-1.5">
-            <div>
-              <h3 class="text-xs font-bold text-purple-700">🧾 ประวัติสลิปทั้งหมด</h3>
-              <p id="slipHistorySummary" class="text-[10px] text-pink-600 font-semibold">ทั้งหมด 0 สลิป • ยอดรวม 0 บาท</p>
-            </div>
-            <div class="flex items-center gap-1 text-[10px]">
-              <select id="historyScopeMode" onchange="onHistoryScopeChange()" class="px-2 py-1 rounded-xl border border-pink-200 bg-pink-50/70 text-gray-700 font-semibold focus:outline-none">
-                <option value="all">📜 ทั้งหมด</option>
-                <option value="month">🗓️ รายเดือน</option>
-              </select>
-              <input type="month" id="historyMonthFilter" onchange="renderSalesHistorySection()" class="hidden px-1.5 py-1 rounded-xl border border-pink-200 bg-white text-gray-700 focus:outline-none">
-            </div>
-          </div>
-
-          <div id="salesHistoryList" class="space-y-2 max-h-52 overflow-y-auto pr-1 text-[11px]">
-            <!-- Render via JS -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- หน้าต่างใหม่ (Modal) แสดงรายการคำสั่งซื้อและสลิปทั้งหมดของลูกค้าที่กดเลือก -->
-  <div id="customerDetailModal" class="fixed inset-0 bg-rose-950/35 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 max-w-md w-full shadow-2xl border-2 border-pink-200 space-y-3 max-h-[85vh] flex flex-col">
-      <div class="flex justify-between items-start border-b border-pink-100 pb-2.5">
+    <!-- ================= TAB 5: แก้ไขเทมเพลตฟอร์ม (อัปเดตทันที 100%) ================= -->
+    <section id="sectionTemplate" class="hidden space-y-4">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70">
         <div>
-          <span class="text-[10px] bg-pink-100 text-pink-700 font-bold px-2 py-0.5 rounded-full">🧾 ประวัติคำสั่งซื้อ & สลิปของลูกค้า</span>
-          <h3 id="detailCustomerName" class="text-base font-bold text-gray-800 mt-1">-</h3>
-          <p id="detailCustomerStats" class="text-[11px] text-emerald-600 font-semibold">ยอดซื้อรวม 0 บาท (0 รายการ)</p>
+          <h2 class="text-xs font-semibold text-slate-900">ปรับแต่งข้อความฟอร์มอัตโนมัติ</h2>
+          <p class="text-[11px] text-slate-500">แก้ไขข้อความด้านล่างแล้วกดบันทึก ระบบจะอัปเดตไปใช้ในหน้าส่งฟอร์มทันที</p>
         </div>
-        <button type="button" onclick="closeCustomerDetailModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold px-2.5 py-1 rounded-xl transition">✕ ปิด</button>
+        <div class="flex gap-1.5 bg-slate-200/70 p-1 rounded-xl shrink-0">
+          <button type="button" id="editTplTvBtn" onclick="switchTemplateEditorTarget('tv')" class="py-1.5 px-3 rounded-lg text-xs font-medium bg-slate-900 text-white transition">
+            📺 ฟอร์มทีวี
+          </button>
+          <button type="button" id="editTplMobileBtn" onclick="switchTemplateEditorTarget('mobile')" class="py-1.5 px-3 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition">
+            📱 ฟอร์มมือถือ
+          </button>
+        </div>
       </div>
-      <div id="detailCustomerOrdersList" class="space-y-2 overflow-y-auto pr-1 text-xs flex-1">
-        <!-- Render via JS -->
+
+      <!-- Clickable Variable Chips to Insert Easily -->
+      <div class="space-y-1.5">
+        <span class="text-[11px] font-medium text-slate-500 block">คลิกตัวแปรเพื่อแทรกลงในฟอร์ม:</span>
+        <div class="flex flex-wrap gap-1.5 text-[11px] font-mono">
+          <button type="button" onclick="insertVariable('{email}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg transition">{email} อีเมล</button>
+          <button type="button" onclick="insertVariable('{pass}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg transition">{pass} รหัสผ่าน</button>
+          <button type="button" onclick="insertVariable('{profile}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg transition">{profile} ชื่อจอ</button>
+          <button type="button" onclick="insertVariable('{pin}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg transition">{pin} รหัส PIN</button>
+          <button type="button" onclick="insertVariable('{days}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg transition">{days} จำนวนวัน</button>
+          <button type="button" onclick="insertVariable('{expire}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg transition">{expire} วันหมดอายุ</button>
+          <button type="button" onclick="insertVariable('{device}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg transition">{device} อุปกรณ์</button>
+        </div>
       </div>
-    </div>
+
+      <textarea id="templateEditor" rows="13" oninput="onTemplateLiveInput()" class="minimal-input w-full p-4 rounded-2xl text-xs text-slate-800 leading-relaxed font-mono"></textarea>
+
+      <div class="flex gap-2.5">
+        <button type="button" onclick="saveTemplate()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-xl text-xs transition">
+          บันทึกฟอร์มนี้
+        </button>
+        <button type="button" onclick="resetTemplate()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-3 px-4 rounded-xl text-xs transition">
+          คืนค่าเริ่มต้น
+        </button>
+      </div>
+    </section>
+
   </div>
 
   <script>
-    // ================= ค่าเริ่มต้นและตารางราคา =================
+    // ================= ตารางราคาเริ่มต้น =================
     const PRICE_TABLE = {
       agent: {
         mobile: { 1: 5, 2: 8, 3: 11, 5: 17, 7: 23, 10: 30, 15: 42, 30: 75 },
@@ -662,19 +525,43 @@
 อ่านการใช้งานให้ครบถ้วน ֺ      🏡 𓈒   
 🌷หากทำผิดกฎ 𓈒ปรับข้อละ 𝟱𝟬𝟬฿ יִ`;
 
-    const DEFAULT_MOBILE_TEMPLATE = `🌸 ขอบคุณที่อุดหนุน Netflix 4K ละมุนนีนะคะ 🧸🍿
-━━━━━━━━━━━━━━
-📧 อีเมล : {email}
-🔑 รหัสผ่าน : {pass}
-👤 โปรไฟล์ : {profile}
-🔢 รหัส PIN : {pin}
-📱 อุปกรณ์ : {device}
-⏳ แพ็กเกจ : {days} วัน
-📅 หมดอายุวันที่ : {expire}
-━━━━━━━━━━━━━━
-⚠️ รบกวนเข้าใช้งานให้ตรงโปรไฟล์และไม่เปลี่ยนรหัสผ่านนะคะ 💕`;
+    const DEFAULT_MOBILE_TEMPLATE = `🎀🍀𓈒👀
+         netflix𓈒 {days} days no tv
+    ꒰𓈒 เมลปิดจากระบบรับเคลม 𓈒꒱
 
-    // ================= ฟังก์ชันคำนวณวันที่แบบ UTC (แก้ปัญหาข้ามเดือน/ข้ามปีได้แม่นยำ 100%) =================
+เมล  ╺ {email}
+รหัส ╺ {pass}
+
+           ชื่อจอ        ♡    {profile}
+           รหัสพิน    ♡    {pin}
+
+           ❨   exp 𓈒 {expire}  ♡   ❩
+
+✿  🐬 ֺ  1  คน  1  อุปกรณ์เท่านั้น
+      ห้ามมั่วจอคนอื่นน้า   𓈒   🌸♡
+      🌴  𓈒  ห้ามเข้าทีวีเด็ดขาดน้า
+
+✿  𓈒ห้ามเปลี่ยนรหัสผ่านทางร้าน
+       ชื่อจอ พิน ตั้งค่าทุกกรณี 𓈒🍮𓈒
+
+✿   แอคหาร 𝟱 คน 𓈒มีปัญหา  🐝 𓈒
+        เรื่องจอเต็ม 𓈒  รอ 𝟭-𝟮 ชั่วโมง
+
+✿   กรณีรหัสผ่านผิดแจ้งร้านทันที 
+       งดพยายามเข้าหลายครั้งหรือ
+       กดย้ำๆ เมลล็อกไม่เคลม ݂ 🥕 יִ
+
+✿   🚘𓈒𑁊 เมลปิดจากระบบรับเคลม
+
+✿   ห้ามนำสินค้า 𓈒 ร้านไปขายต่อ יִ 
+        หรือแชร์ให้บุคคลอื่นเด็ดขาด
+       ใช้งานส่วนตัวเท่านั้น   𓈒  🌷✿𓈒
+       ୨୧  พบเจอปรับ ╺  3000 บาท
+
+อ่านการใช้งานให้ครบถ้วน ֺ      🥣 𓈒   
+🗯️  หากทำผิดกฎปรับข้อละ 𝟱𝟬𝟬฿ יִ`;
+
+    // ================= ฟังก์ชันจัดการวันที่ (UTC แม่นยำข้ามเดือน/ข้ามปี) =================
     function toLocalYMD(dateObj) {
       const y = dateObj.getFullYear();
       const m = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -684,7 +571,6 @@
 
     function getFutureDateStr(daysToAdd) {
       const now = new Date();
-      // ใช้ Date.UTC เพื่อบวกวันข้ามเดือน ข้ามปี หรือปีอธิกสุรทินได้อย่างแม่นยำไม่คลาดเคลื่อนตาม Timezone
       const utcMs = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + Number(daysToAdd));
       const d = new Date(utcMs);
       const y = d.getUTCFullYear();
@@ -714,15 +600,15 @@
       return `${parts[2]}/${parts[1]}/${Number(parts[0]) + 543}`;
     }
 
-    function getCurrentTimestampStr() {
-      const now = new Date();
-      const datePart = formatThaiDate(toLocalYMD(now));
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
-      return `${datePart} เวลา ${hh}:${mm} น.`;
+    function formatThaiMonthYear(ymStr) {
+      if (!ymStr || ymStr.length < 7) return ymStr;
+      const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      const y = Number(ymStr.slice(0, 4)) + 543;
+      const mIdx = Number(ymStr.slice(5, 7)) - 1;
+      return `${months[mIdx] || ymStr.slice(5, 7)} ${y}`;
     }
 
-    // โหลดข้อมูลจาก LocalStorage หรือสร้างข้อมูลตัวอย่าง
+    // ================= สถานะข้อมูลหลัก (State) =================
     let accounts = JSON.parse(localStorage.getItem('nf_accounts')) || [
       {
         id: 'acc_1',
@@ -732,11 +618,11 @@
         createdDate: getPastDateStr(8),
         expireDate: getFutureDateStr(22),
         slots: [
-          { slotNum: 1, profileName: 'จอ 1', pin: '1111', customer: 'น้องแพรว', device: 'mobile', expireDate: getFutureDateStr(5), isTvFixed: false },
+          { slotNum: 1, profileName: 'จอ 1', pin: '1111', customer: 'ตัวแทนแพรว', device: 'mobile', expireDate: getFutureDateStr(5), isTvFixed: false },
           { slotNum: 2, profileName: 'จอ 2', pin: '2222', customer: '', device: 'mobile', expireDate: '', isTvFixed: false },
-          { slotNum: 3, profileName: 'จอ 3', pin: '3333', customer: 'คุณก้อง', device: 'mobile', expireDate: getFutureDateStr(0), isTvFixed: false },
+          { slotNum: 3, profileName: 'จอ 3', pin: '3333', customer: 'ตัวแทนก้อง', device: 'mobile', expireDate: getFutureDateStr(0), isTvFixed: false },
           { slotNum: 4, profileName: 'จอ 4', pin: '4444', customer: '', device: 'mobile', expireDate: '', isTvFixed: false },
-          { slotNum: 5, profileName: 'จอ 5 (TV)', pin: '5555', customer: 'บ้านคุณบี (TV)', device: 'tv', expireDate: getFutureDateStr(18), isTvFixed: true }
+          { slotNum: 5, profileName: 'จอ 5 (TV)', pin: '5555', customer: 'ตัวแทนบี', device: 'tv', expireDate: getFutureDateStr(18), isTvFixed: true }
         ]
       },
       {
@@ -747,60 +633,66 @@
         createdDate: getPastDateStr(25),
         expireDate: getFutureDateStr(5),
         slots: [
-          { slotNum: 1, profileName: 'จอ 1', pin: '1212', customer: 'คุณน้ำฝน', device: 'mobile', expireDate: getFutureDateStr(4), isTvFixed: false },
+          { slotNum: 1, profileName: 'จอ 1', pin: '1212', customer: 'ตัวแทนน้ำฝน', device: 'mobile', expireDate: getFutureDateStr(4), isTvFixed: false },
           { slotNum: 2, profileName: 'จอ 2', pin: '2323', customer: '', device: 'mobile', expireDate: '', isTvFixed: false },
           { slotNum: 3, profileName: 'จอ 3', pin: '3434', customer: '', device: 'mobile', expireDate: '', isTvFixed: false },
-          { slotNum: 4, profileName: 'จอ 4', pin: '4545', customer: 'น้องใบเตย', device: 'mobile', expireDate: getFutureDateStr(3), isTvFixed: false },
+          { slotNum: 4, profileName: 'จอ 4', pin: '4545', customer: 'ตัวแทนแพรว', device: 'mobile', expireDate: getFutureDateStr(3), isTvFixed: false },
           { slotNum: 5, profileName: 'จอ 5 (TV)', pin: '5656', customer: '', device: 'tv', expireDate: '', isTvFixed: true }
         ]
       }
     ];
 
-    // ประวัติต้นทุนบัญชีแม่แยกเก็บถาวร (แม้ลบบัญชีออกจากคลังหลังหมดอายุ ยอดต้นทุนย้อนหลังหลายเดือน/ปีก็ยังอยู่ครบ)
     let costHistory = JSON.parse(localStorage.getItem('nf_cost_history')) || [
       { id: 'c_1', date: getPastDateStr(8), email: 'lamunnee.vip01@gmail.com', amount: 320 },
       { id: 'c_2', date: getPastDateStr(25), email: 'lamunnee.vip02@gmail.com', amount: 320 }
     ];
 
     let salesHistory = JSON.parse(localStorage.getItem('nf_sales')) || [
-      { id: 1, date: getPastDateStr(3), time: '14:20', customer: 'น้องแพรว', device: 'mobile', days: 7, amount: 23, expireDate: getFutureDateStr(4), profileLabel: 'จอ 1' },
-      { id: 2, date: getPastDateStr(2), time: '18:05', customer: 'คุณก้อง', device: 'mobile', days: 3, amount: 11, expireDate: getFutureDateStr(1), profileLabel: 'จอ 3' },
-      { id: 3, date: getPastDateStr(1), time: '20:15', customer: 'บ้านคุณบี (TV)', device: 'tv', days: 30, amount: 115, expireDate: getFutureDateStr(29), profileLabel: 'จอ 5 (TV)' },
-      { id: 4, date: getFutureDateStr(0), time: '10:30', customer: 'คุณน้ำฝน', device: 'mobile', days: 30, amount: 75, expireDate: getFutureDateStr(30), profileLabel: 'จอ 1' }
+      { id: 1, date: getPastDateStr(35), time: '11:10', customer: 'ตัวแทนแพรว', tier: 'agent', device: 'mobile', days: 30, amount: 75, expireDate: getPastDateStr(5), profileLabel: 'จอ 1', accountEmail: 'lamunnee.vip01@gmail.com' },
+      { id: 2, date: getPastDateStr(3), time: '14:20', customer: 'ตัวแทนแพรว', tier: 'agent', device: 'mobile', days: 7, amount: 23, expireDate: getFutureDateStr(4), profileLabel: 'จอ 1', accountEmail: 'lamunnee.vip01@gmail.com' },
+      { id: 3, date: getPastDateStr(2), time: '18:05', customer: 'ตัวแทนก้อง', tier: 'agent', device: 'mobile', days: 3, amount: 11, expireDate: getFutureDateStr(1), profileLabel: 'จอ 3', accountEmail: 'lamunnee.vip01@gmail.com' },
+      { id: 4, date: getPastDateStr(1), time: '20:15', customer: 'ตัวแทนบี', tier: 'agent', device: 'tv', days: 30, amount: 115, expireDate: getFutureDateStr(29), profileLabel: 'จอ 5 (TV)', accountEmail: 'lamunnee.vip01@gmail.com' },
+      { id: 5, date: getFutureDateStr(0), time: '10:30', customer: 'ตัวแทนน้ำฝน', tier: 'agent', device: 'mobile', days: 30, amount: 75, expireDate: getFutureDateStr(30), profileLabel: 'จอ 1', accountEmail: 'lamunnee.vip02@gmail.com' }
     ];
-    let formTemplate = localStorage.getItem('nf_template') || DEFAULT_MOBILE_TEMPLATE;
-    let tvTemplate = localStorage.getItem('nf_template_tv') || DEFAULT_TV_TEMPLATE;
-    let mobileTemplate = localStorage.getItem('nf_template_mobile') || localStorage.getItem('nf_template') || DEFAULT_MOBILE_TEMPLATE;
+
+    // โหลดเทมเพลตฟอร์มจาก LocalStorage (อัปเดตเวอร์ชัน v2 เพื่อให้ใช้เทมเพลตใหม่ล่าสุดทันที)
+    let tvTemplate = localStorage.getItem('nf_template_tv_v2') !== null
+      ? localStorage.getItem('nf_template_tv_v2')
+      : DEFAULT_TV_TEMPLATE;
+
+    let mobileTemplate = localStorage.getItem('nf_template_mobile_v2') !== null
+      ? localStorage.getItem('nf_template_mobile_v2')
+      : DEFAULT_MOBILE_TEMPLATE;
+
     let editingTemplateTarget = 'tv'; // 'tv' | 'mobile'
     let lineChartInstance = null;
-    let pieChartInstance = null;
-    let pieChartMode = 'cost_vs_profit'; // 'cost_vs_profit' | 'device_profit'
-    let currentAlertFilter = 'all'; // 'all' | 'free' | 'expiring'
-    let masterViewMode = null; // null | 'today' | 'all'
+    let currentAlertFilter = 'all';
+    let masterViewMode = null;
     let confirmCallback = null;
-    let lastGeneratedSlip = null;
+    let selectedAgentName = null;
 
-    // ================= บันทึกข้อมูล & แจ้งเตือน Toast / Modal =================
+    // ================= บันทึกข้อมูล & แจ้งเตือน =================
     function saveData() {
       localStorage.setItem('nf_accounts', JSON.stringify(accounts));
       localStorage.setItem('nf_sales', JSON.stringify(salesHistory));
       localStorage.setItem('nf_cost_history', JSON.stringify(costHistory));
       updateAlertBadge();
       updateFormStockSummary();
+      updateKnownCustomersDatalist();
     }
 
-    function showToast(msg, icon = '🌸') {
+    function showToast(msg, icon = '✨') {
       const box = document.getElementById('toastBox');
       document.getElementById('toastIcon').textContent = icon;
       document.getElementById('toastMsg').textContent = msg;
       box.classList.remove('hidden');
       setTimeout(() => {
-        box.classList.remove('translate-y-[-20px]', 'opacity-0');
+        box.classList.remove('translate-y-[-16px]', 'opacity-0');
       }, 10);
       setTimeout(() => {
-        box.classList.add('translate-y-[-20px]', 'opacity-0');
+        box.classList.add('translate-y-[-16px]', 'opacity-0');
         setTimeout(() => box.classList.add('hidden'), 300);
-      }, 2800);
+      }, 2600);
     }
 
     function showConfirm(msg, callback) {
@@ -820,26 +712,24 @@
 
     document.getElementById('confirmNoBtn').addEventListener('click', closeConfirmModal);
     document.getElementById('confirmYesBtn').addEventListener('click', () => {
-      if (typeof confirmCallback === 'function') {
-        confirmCallback();
-      }
+      if (typeof confirmCallback === 'function') confirmCallback();
       closeConfirmModal();
     });
 
     // ================= สลับแท็บเมนูหลัก =================
     function switchTab(tabName) {
-      const tabs = ['form', 'store', 'calendar', 'template', 'profit'];
+      const tabs = ['form', 'store', 'calendar', 'agents', 'template'];
       tabs.forEach(t => {
         const section = document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1));
         const btn = document.getElementById('nav' + t.charAt(0).toUpperCase() + t.slice(1) + 'Btn');
         if (t === tabName) {
           section.classList.remove('hidden');
-          btn.classList.add('bg-pink-500', 'text-white', 'shadow-sm');
-          btn.classList.remove('text-gray-500', 'hover:text-pink-600');
+          btn.classList.add('bg-white', 'text-slate-900', 'shadow-xs');
+          btn.classList.remove('text-slate-500', 'hover:text-slate-900');
         } else {
           section.classList.add('hidden');
-          btn.classList.remove('bg-pink-500', 'text-white', 'shadow-sm');
-          btn.classList.add('text-gray-500', 'hover:text-pink-600');
+          btn.classList.remove('bg-white', 'text-slate-900', 'shadow-xs');
+          btn.classList.add('text-slate-500', 'hover:text-slate-900');
         }
       });
 
@@ -850,15 +740,23 @@
         renderAccounts();
       } else if (tabName === 'calendar') {
         renderCalendarAndAlerts();
+      } else if (tabName === 'agents') {
+        initAgentHistoryTab();
       } else if (tabName === 'template') {
-        switchTemplateEditorTarget(editingTemplateTarget);
-      } else if (tabName === 'profit') {
-        initProfitPeriodSelectors();
-        renderProfitTab();
+        // ซิงค์ปุ่มแก้ไขฟอร์มให้ตรงกับอุปกรณ์ที่กำลังเลือกในหน้าส่งฟอร์ม เพื่อไม่ให้สับสนว่าทำไมแก้แล้วไม่เปลี่ยน
+        const currentDev = getSelectedEffectiveDevice();
+        switchTemplateEditorTarget(currentDev);
       }
     }
 
-    // ================= TAB 1: ฟอร์มส่งงาน (กรองตามจำนวนวัน & อุปกรณ์อัตโนมัติ) =================
+    // ================= TAB 1: ฟอร์มส่งงาน =================
+    function updateKnownCustomersDatalist() {
+      const datalist = document.getElementById('knownCustomersList');
+      if (!datalist) return;
+      const names = Array.from(new Set(salesHistory.map(s => s.customer).filter(Boolean)));
+      datalist.innerHTML = names.map(name => `<option value="${name}">`).join('');
+    }
+
     function getValidSellableAccounts() {
       return accounts.map(acc => {
         const masterLeft = getDaysRemaining(acc.expireDate);
@@ -885,10 +783,10 @@
         totalFreeMobile += acc.freeMobileSlots.length;
         totalFreeTv += acc.freeTvSlots.length;
       });
-      const mEl = document.getElementById('formFreeMobileCount');
-      const tEl = document.getElementById('formFreeTvCount');
-      if (mEl) mEl.textContent = `${totalFreeMobile} จอ`;
-      if (tEl) tEl.textContent = `${totalFreeTv} จอ`;
+      const mEl = document.getElementById('headerMobileFree');
+      const tEl = document.getElementById('headerTvFree');
+      if (mEl) mEl.textContent = totalFreeMobile;
+      if (tEl) tEl.textContent = totalFreeTv;
     }
 
     function onFilterCriteriaChange() {
@@ -898,12 +796,11 @@
 
     function populateAccountDropdown() {
       updateFormStockSummary();
-      const deviceType = document.getElementById('deviceType').value; // 'mobile' | 'tv' | 'all'
+      const deviceType = document.getElementById('deviceType').value;
       const requestedDays = Number(document.getElementById('durationDays').value) || 7;
       const selectEl = document.getElementById('selectAccount');
       const prevSelectedId = selectEl.value;
 
-      // กรองบัญชีแม่ที่: 1) มีจอว่างตรงประเภทอุปกรณ์ และ 2) อายุคงเหลือ >= จำนวนวันที่เลือกซื้อ (ถ้าเลือก 7 วัน แล้วเหลือ 6 วัน จะไม่ขึ้น)
       const validAccs = getValidSellableAccounts().filter(acc => {
         if (acc.masterLeft < requestedDays) return false;
         if (deviceType === 'tv') return acc.freeTvSlots.length > 0;
@@ -912,10 +809,10 @@
       });
 
       if (validAccs.length === 0) {
-        const devLabel = deviceType === 'tv' ? 'ทีวี' : deviceType === 'mobile' ? 'มือถือ/iPad/คอม' : 'ทุกอุปกรณ์';
-        selectEl.innerHTML = `<option value="">-- ไม่มีเมลที่ว่างจอ${devLabel} & อายุถึง ${requestedDays} วัน --</option>`;
+        selectEl.innerHTML = `<option value="">-- ไม่มีเมลว่างที่วันพอ (${requestedDays} วัน) --</option>`;
         document.getElementById('selectProfile').innerHTML = `<option value="">-- ไม่มีจอว่าง --</option>`;
         clearAutoDisplayBox();
+        generateFormPreview();
         return;
       }
 
@@ -925,7 +822,7 @@
           : deviceType === 'mobile'
             ? acc.freeMobileSlots.length
             : acc.allFreeSlots.length;
-        return `<option value="${acc.id}">${acc.email} (ว่าง ${freeCount} จอ | เหลือ ${acc.masterLeft} วัน)</option>`;
+        return `<option value="${acc.id}">${acc.email} (ว่าง ${freeCount} • เหลือ ${acc.masterLeft} วัน)</option>`;
       }).join('');
 
       if (prevSelectedId && validAccs.some(a => a.id === prevSelectedId)) {
@@ -940,7 +837,7 @@
       document.getElementById('dispEmail').textContent = '-';
       document.getElementById('dispPass').textContent = '-';
       document.getElementById('dispPin').textContent = '-';
-      document.getElementById('dispMasterLeft').textContent = 'ไม่พร้อมขาย';
+      document.getElementById('dispMasterLeft').textContent = 'ไม่พร้อม';
     }
 
     function onAccountSelect() {
@@ -950,16 +847,15 @@
 
       const acc = getValidSellableAccounts().find(a => a.id === accId);
       if (!acc) {
-        profileSelect.innerHTML = `<option value="">-- เลือกจอว่าง --</option>`;
+        profileSelect.innerHTML = `<option value="">-- เลือกจอ --</option>`;
         clearAutoDisplayBox();
         generateFormPreview();
         return;
       }
 
-      // เด้งอีเมล รหัสผ่าน และวันคงเหลืออัตโนมัติ
       document.getElementById('dispEmail').textContent = acc.email;
       document.getElementById('dispPass').textContent = acc.pass;
-      document.getElementById('dispMasterLeft').textContent = `เหลือ ${acc.masterLeft} วัน`;
+      document.getElementById('dispMasterLeft').textContent = `${acc.masterLeft} วัน`;
 
       const matchingSlots = deviceType === 'tv'
         ? acc.freeTvSlots
@@ -968,9 +864,9 @@
           : acc.allFreeSlots;
 
       profileSelect.innerHTML = matchingSlots.map(s => {
-        const tag = s.isTvFixed ? '📺 ฟิกทีวี' : '📱 มือถือ/iPad/คอม';
+        const tag = s.isTvFixed ? '📺 ทีวี' : '📱 มือถือ';
         const pName = s.profileName || `จอ ${s.slotNum}`;
-        return `<option value="${s.slotNum}">${pName} (${tag} - PIN:${s.pin})</option>`;
+        return `<option value="${s.slotNum}">${pName} (${tag} • PIN:${s.pin})</option>`;
       }).join('');
 
       if (matchingSlots.length > 0) {
@@ -993,10 +889,10 @@
     }
 
     function getSelectedEffectiveDevice() {
-      const selectedDev = document.getElementById('deviceType').value;
+      const selectedDev = document.getElementById('deviceType')?.value || 'mobile';
       if (selectedDev !== 'all') return selectedDev;
-      const accId = document.getElementById('selectAccount').value;
-      const slotNum = Number(document.getElementById('selectProfile').value);
+      const accId = document.getElementById('selectAccount')?.value;
+      const slotNum = Number(document.getElementById('selectProfile')?.value);
       const acc = accounts.find(a => a.id === accId);
       const slot = acc ? acc.slots.find(s => s.slotNum === slotNum) : null;
       return (slot && slot.isTvFixed) ? 'tv' : 'mobile';
@@ -1023,12 +919,10 @@
       const customInput = document.getElementById('customCustomerPrice');
       if (tier === 'customer') {
         customBox.classList.remove('hidden');
-        // เติมราคาเริ่มต้นของลูกค้าให้อัตโนมัติหากยังไม่ได้กรอก เพื่อความสะดวกในการแก้ต่อ
         if (customInput.value === '') {
           const device = getSelectedEffectiveDevice();
           const days = Number(document.getElementById('durationDays').value) || 7;
-          const defaultCustPrice = PRICE_TABLE.customer?.[device]?.[days] ?? '';
-          customInput.value = defaultCustPrice;
+          customInput.value = PRICE_TABLE.customer?.[device]?.[days] ?? '';
         }
       } else {
         customBox.classList.add('hidden');
@@ -1039,7 +933,7 @@
     function calculatePrice() {
       const price = getCurrentCalculatedPrice();
       const badgeEl = document.getElementById('autoPriceBadge');
-      if (badgeEl) badgeEl.textContent = `${price} บาท`;
+      if (badgeEl) badgeEl.textContent = `${price} ฿`;
       generateFormPreview();
     }
 
@@ -1055,21 +949,15 @@
       const pin = slot ? slot.pin : '1111';
       const effectiveDevice = getSelectedEffectiveDevice();
       const days = Number(document.getElementById('durationDays').value) || 7;
-      const price = getCurrentCalculatedPrice();
-      const tierLabel = document.getElementById('priceTier').value === 'agent' ? 'ตัวแทน' : 'ลูกค้า';
-      const customerInput = document.getElementById('customerName').value.trim();
-      const customerDisplay = customerInput || (lastGeneratedSlip ? lastGeneratedSlip.customer : `ลูกค้า (${tierLabel})`);
 
-      const deviceText = effectiveDevice === 'tv' ? 'ทีวี / กล่องแอนดรอยด์ (ฟิกจอ)' : 'มือถือ / iPad / แท็บเล็ต / คอม';
+      const deviceText = effectiveDevice === 'tv' ? 'ทีวี / กล่องแอนดรอยด์' : 'มือถือ / iPad / แท็บเล็ต / คอม';
       const expireDateStr = formatThaiDate(getFutureDateStr(days));
-      const rawExpire = getFutureDateStr(days); // YYYY-MM-DD
+      const rawExpire = getFutureDateStr(days);
       const shortExpire = rawExpire.split('-').length === 3 ? `${rawExpire.split('-')[2]}  ${rawExpire.split('-')[1]}` : expireDateStr;
       const paddedDays = String(days).padStart(2, '0');
 
-      // เลือกเทมเพลตให้ตรงกับประเภทอุปกรณ์ที่เลือก (ทีวี vs มือถือ)
+      // อ่านค่าล่าสุดจากตัวแปรเทมเพลตที่บันทึกไว้เสมอ (ทั้งทีวีและมือถือใช้ {days} เป็นเลข 2 หลัก และ {expire} เป็น dd  mm)
       const activeTemplate = effectiveDevice === 'tv' ? tvTemplate : mobileTemplate;
-      const daysReplacement = effectiveDevice === 'tv' ? paddedDays : days;
-      const expireReplacement = effectiveDevice === 'tv' ? shortExpire : expireDateStr;
 
       const filledText = activeTemplate
         .replace(/{email}/g, email)
@@ -1077,29 +965,10 @@
         .replace(/{profile}/g, profileLabel)
         .replace(/{pin}/g, pin)
         .replace(/{device}/g, deviceText)
-        .replace(/{days}/g, daysReplacement)
-        .replace(/{expire}/g, expireReplacement);
+        .replace(/{days}/g, paddedDays)
+        .replace(/{expire}/g, shortExpire);
 
       document.getElementById('outputPreview').value = filledText;
-
-      // อัปเดตการ์ดสลิปตัวอย่างแบบเรียลไทม์
-      updateSlipPreviewUI({
-        timestamp: lastGeneratedSlip ? lastGeneratedSlip.timestamp : getCurrentTimestampStr(),
-        customer: customerDisplay,
-        packageText: `Netflix 4K (${days} วัน)`,
-        deviceText: `${effectiveDevice === 'tv' ? 'ทีวี' : 'มือถือ/iPad/คอม'} • ${profileLabel}`,
-        expireText: expireDateStr,
-        amount: price
-      });
-    }
-
-    function updateSlipPreviewUI(slipData) {
-      document.getElementById('slipTimestamp').textContent = `วันที่ทำรายการ: ${slipData.timestamp}`;
-      document.getElementById('slipCustomer').textContent = slipData.customer;
-      document.getElementById('slipPackage').textContent = slipData.packageText;
-      document.getElementById('slipDevice').textContent = slipData.deviceText;
-      document.getElementById('slipExpire').textContent = slipData.expireText;
-      document.getElementById('slipAmount').textContent = `${slipData.amount.toLocaleString()} บาท`;
     }
 
     function generateAndSaveOrder() {
@@ -1108,8 +977,9 @@
       const effectiveDevice = getSelectedEffectiveDevice();
       const days = Number(document.getElementById('durationDays').value) || 7;
       const price = getCurrentCalculatedPrice();
-      const tierLabel = document.getElementById('priceTier').value === 'agent' ? 'ตัวแทน' : 'ลูกค้า';
-      const customer = document.getElementById('customerName').value.trim() || `ลูกค้าทั่วไป (${tierLabel})`;
+      const tier = document.getElementById('priceTier').value;
+      const tierLabel = tier === 'agent' ? 'ตัวแทนทั่วไป' : 'ลูกค้าทั่วไป';
+      const customer = document.getElementById('customerName').value.trim() || tierLabel;
 
       if (!accId || !slotNum) {
         showToast('ไม่มีบัญชีเมลที่ว่างหรือวันไม่พอสำหรับแพ็กเกจนี้ค่ะ', '⚠️');
@@ -1121,7 +991,7 @@
 
       const masterLeft = getDaysRemaining(acc.expireDate);
       if (masterLeft === null || masterLeft < days) {
-        showToast(`แอคแม่เหลืออายุ ${masterLeft ?? 0} วัน ไม่เพียงพอสำหรับ ${days} วันค่ะ`, '❌');
+        showToast(`บัญชีแม่เหลืออายุ ${masterLeft ?? 0} วัน ไม่พอสำหรับ ${days} วันค่ะ`, '❌');
         return;
       }
 
@@ -1132,8 +1002,6 @@
       }
 
       const expireYmd = getFutureDateStr(days);
-      const expireThai = formatThaiDate(expireYmd);
-      const nowTimeStr = getCurrentTimestampStr();
       const nowObj = new Date();
       const timeOnly = `${String(nowObj.getHours()).padStart(2, '0')}:${String(nowObj.getMinutes()).padStart(2, '0')}`;
       const profileLabel = slot.profileName || `จอ ${slotNum}`;
@@ -1147,32 +1015,23 @@
         date: toLocalYMD(nowObj),
         time: timeOnly,
         customer,
+        tier,
         device: effectiveDevice,
         days,
         amount: price,
         expireDate: expireYmd,
-        profileLabel
+        profileLabel,
+        accountEmail: acc.email
       });
 
-      lastGeneratedSlip = {
-        timestamp: nowTimeStr,
-        customer,
-        packageText: `Netflix 4K (${days} วัน)`,
-        deviceText: `${effectiveDevice === 'tv' ? 'ทีวี' : 'มือถือ/iPad/คอม'} • ${profileLabel}`,
-        expireText: expireThai,
-        amount: price
-      };
-
       generateFormPreview();
-      updateSlipPreviewUI(lastGeneratedSlip);
       saveData();
       copyFormText(true);
       document.getElementById('customerName').value = '';
-      populateAccountDropdown();
-      document.getElementById('customerName').value = '';
       const customInput = document.getElementById('customCustomerPrice');
       if (customInput) customInput.value = '';
-      showToast(`บันทึกออเดอร์ ${customer} + ออกสลิป & คัดลอกแล้ว!`, '🎉');
+      populateAccountDropdown();
+      showToast(`บันทึกออเดอร์ "${customer}" และคัดลอกฟอร์มแล้ว!`, '🎉');
     }
 
     function copyFormText(silent = false) {
@@ -1181,113 +1040,10 @@
       textarea.setSelectionRange(0, 99999);
       try {
         document.execCommand('copy');
-        if (!silent) showToast('คัดลอกข้อความแจ้งรหัสเรียบร้อย!', '📑');
+        if (!silent) showToast('คัดลอกข้อความเรียบร้อยแล้ว!', '📋');
       } catch (err) {
         if (!silent) showToast('ไม่สามารถคัดลอกอัตโนมัติ กรุณากดคัดลอกเองนะคะ', '⚠️');
       }
-    }
-
-    function copySlipText() {
-      const ts = document.getElementById('slipTimestamp').textContent;
-      const cust = document.getElementById('slipCustomer').textContent;
-      const pkg = document.getElementById('slipPackage').textContent;
-      const dev = document.getElementById('slipDevice').textContent;
-      const exp = document.getElementById('slipExpire').textContent;
-      const amt = document.getElementById('slipAmount').textContent;
-
-      const slipMsg = `🧾 สลิปยืนยันการสั่งซื้อ Netflix 4K 🌸
-━━━━━━━━━━━━━━
-👤 ชื่อผู้ซื้อ : ${cust}
-🎬 รายการ : ${pkg}
-📱 อุปกรณ์/จอ : ${dev}
-💰 ยอดชำระ : ${amt}
-📅 หมดอายุ : ${exp}
-⏰ ${ts}
-━━━━━━━━━━━━━━
-ขอบคุณที่อุดหนุนนะคะ 🧸💕`;
-
-      const tempInput = document.createElement('textarea');
-      tempInput.value = slipMsg;
-      document.body.appendChild(tempInput);
-      tempInput.select();
-      try {
-        document.execCommand('copy');
-        showToast('คัดลอกข้อความสลิปส่งลูกค้าแล้ว!', '🧾');
-      } catch (e) {
-        showToast('คัดลอกสลิปไม่สำเร็จ', '⚠️');
-      }
-      document.body.removeChild(tempInput);
-    }
-
-    function downloadSlipImage() {
-      const canvas = document.getElementById('slipExportCanvas');
-      const ctx = canvas.getContext('2d');
-
-      const ts = document.getElementById('slipTimestamp').textContent;
-      const cust = document.getElementById('slipCustomer').textContent;
-      const pkg = document.getElementById('slipPackage').textContent;
-      const dev = document.getElementById('slipDevice').textContent;
-      const exp = document.getElementById('slipExpire').textContent;
-      const amt = document.getElementById('slipAmount').textContent;
-
-      // พื้นหลังสลิปพาสเทล
-      const grad = ctx.createLinearGradient(0, 0, 420, 320);
-      grad.addColorStop(0, '#fff1f2');
-      grad.addColorStop(0.5, '#ffffff');
-      grad.addColorStop(1, '#f3e8ff');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 420, 320);
-
-      // กรอบเส้นประ
-      ctx.strokeStyle = '#f472b6';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([8, 6]);
-      ctx.strokeRect(14, 14, 392, 292);
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = '#db2777';
-      ctx.font = 'bold 20px Kanit, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('🌸 E-SLIP ยืนยันการสั่งซื้อ 🧸', 210, 52);
-
-      ctx.fillStyle = '#9ca3af';
-      ctx.font = '13px Kanit, sans-serif';
-      ctx.fillText(ts, 210, 76);
-
-      ctx.strokeStyle = '#fbcfe8';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(35, 92);
-      ctx.lineTo(385, 92);
-      ctx.stroke();
-
-      const rows = [
-        ['ชื่อผู้ซื้อ :', cust],
-        ['รายการ :', pkg],
-        ['อุปกรณ์ / จอ :', dev],
-        ['วันหมดอายุ :', exp],
-        ['ยอดชำระสุทธิ :', amt]
-      ];
-
-      let yPos = 128;
-      rows.forEach(([label, val], idx) => {
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#6b7280';
-        ctx.font = '15px Kanit, sans-serif';
-        ctx.fillText(label, 38, yPos);
-
-        ctx.textAlign = 'right';
-        ctx.fillStyle = idx === 4 ? '#059669' : '#1f2937';
-        ctx.font = idx === 4 ? 'bold 19px Kanit, sans-serif' : 'bold 15px Kanit, sans-serif';
-        ctx.fillText(val, 382, yPos);
-        yPos += 36;
-      });
-
-      const link = document.createElement('a');
-      link.download = `slip-netflix-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      showToast('บันทึกรูปภาพสลิปเรียบร้อยแล้วค่ะ!', '🖼️');
     }
 
     // ================= TAB 2: คลัง 5 จอ =================
@@ -1318,7 +1074,7 @@
       });
 
       const todayStr = toLocalYMD(new Date());
-      const newAcc = {
+      accounts.push({
         id: 'acc_' + Date.now(),
         email,
         pass,
@@ -1326,9 +1082,8 @@
         createdDate: todayStr,
         expireDate,
         slots: slotsData
-      };
+      });
 
-      accounts.push(newAcc);
       costHistory.push({
         id: 'c_' + Date.now(),
         date: todayStr,
@@ -1342,7 +1097,7 @@
 
       document.getElementById('newAccEmail').value = '';
       document.getElementById('newAccPass').value = '';
-      showToast('เพิ่มบัญชีใหม่เข้าคลังเรียบร้อยแล้วค่ะ!', '🎉');
+      showToast('เพิ่มบัญชีใหม่เข้าคลังเรียบร้อย!', '✨');
     }
 
     function updateSlotMeta(accId, slotNum, field, value) {
@@ -1353,7 +1108,7 @@
       slot[field] = value.trim() || (field === 'profileName' ? `จอ ${slotNum}` : slot.pin);
       saveData();
       populateAccountDropdown();
-      showToast(`อัปเดตข้อมูลจอ ${slotNum} เรียบร้อย!`, '💾');
+      showToast(`อัปเดตข้อมูลจอ ${slotNum} แล้ว`, '💾');
     }
 
     function toggleSlotTvFix(accId, slotNum) {
@@ -1362,66 +1117,66 @@
       const slot = acc.slots.find(s => s.slotNum === slotNum);
       if (!slot) return;
       if (slot.customer) {
-        showToast('กรุณาเคลียร์จอก่อนเปลี่ยนประเภทจอ (มือถือ/ทีวี) ค่ะ', '⚠️');
+        showToast('กรุณาเคลียร์จอก่อนเปลี่ยนประเภทจอค่ะ', '⚠️');
         return;
       }
       slot.isTvFixed = !slot.isTvFixed;
       slot.device = slot.isTvFixed ? 'tv' : 'mobile';
       saveData();
       renderAccounts();
-      showToast(`ตั้งค่าจอ ${slotNum} เป็น ${slot.isTvFixed ? '📺 ฟิกทีวี' : '📱 มือถือ/iPad/คอม'} แล้ว!`, '✨');
+      showToast(`เปลี่ยนจอ ${slotNum} เป็น ${slot.isTvFixed ? 'ฟิกทีวี' : 'มือถือ'} แล้ว`, '✨');
     }
 
     function renderAccounts() {
       const container = document.getElementById('accountListContainer');
       if (accounts.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-xs text-gray-400">ยังไม่มีบัญชีในคลัง เพิ่มด้านบนได้เลยค่ะ 🧸</div>`;
+        container.innerHTML = `<div class="text-center py-10 text-xs text-slate-400">ยังไม่มีบัญชีในคลัง เพิ่มด้านบนได้เลยค่ะ</div>`;
         return;
       }
 
       container.innerHTML = accounts.map(acc => {
         const freeCount = acc.slots.filter(s => !s.customer).length;
         const masterDaysLeft = getDaysRemaining(acc.expireDate);
-        let masterBadge = `<span class="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">แอคแม่หมด: ${formatThaiDate(acc.expireDate)} (เหลือ ${masterDaysLeft ?? '-'} วัน)</span>`;
+        let masterBadge = `<span class="text-[11px] text-slate-500">หมดอายุ: ${formatThaiDate(acc.expireDate)} (เหลือ ${masterDaysLeft ?? '-'} วัน)</span>`;
         if (masterDaysLeft !== null && masterDaysLeft <= 2) {
-          masterBadge = `<span class="text-[10px] bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded-full animate-pulse">⚠️ แอคแม่${masterDaysLeft <= 0 ? 'หมดอายุแล้ว!' : `เหลือ ${masterDaysLeft} วัน`} (${formatThaiDate(acc.expireDate)})</span>`;
+          masterBadge = `<span class="text-[11px] text-rose-600 font-semibold">⚠️ ${masterDaysLeft <= 0 ? 'บัญชีแม่หมดอายุแล้ว' : `เหลือ ${masterDaysLeft} วัน`} (${formatThaiDate(acc.expireDate)})</span>`;
         }
 
         const slotsHtml = acc.slots.map(s => {
           const isOccupied = Boolean(s.customer);
           const daysLeft = getDaysRemaining(s.expireDate);
           const pName = s.profileName || `จอ ${s.slotNum}`;
-          let badgeClass = s.isTvFixed ? 'bg-purple-50/70 border-purple-200 text-purple-800' : 'bg-emerald-50 border-emerald-200 text-emerald-700';
+          let cardStyle = 'bg-slate-50/70 border-slate-200/80 text-slate-700';
           let statusLabel = 'ว่าง';
 
           if (isOccupied) {
             if (daysLeft !== null && daysLeft <= 0) {
-              badgeClass = 'bg-rose-50 border-rose-300 text-rose-700';
-              statusLabel = `หมดอายุ (${formatThaiDate(s.expireDate)})`;
+              cardStyle = 'bg-rose-50/80 border-rose-200 text-rose-700';
+              statusLabel = `หมดอายุ`;
             } else {
-              badgeClass = s.isTvFixed ? 'bg-purple-100/80 border-purple-300 text-purple-800' : 'bg-pink-50 border-pink-200 text-pink-700';
+              cardStyle = 'bg-white border-slate-300 text-slate-800';
               statusLabel = `เหลือ ${daysLeft} วัน`;
             }
           }
 
           return `
-            <div class="p-2 rounded-xl border ${badgeClass} flex flex-col justify-between text-[11px] space-y-1">
-              <div class="flex justify-between items-center font-bold gap-1">
-                <input type="text" value="${pName}" onchange="updateSlotMeta('${acc.id}', ${s.slotNum}, 'profileName', this.value)" title="แก้ไขชื่อจอ" class="w-full bg-white/80 px-1 py-0.5 rounded border border-black/10 text-[10px] font-bold text-gray-800 focus:outline-none">
-                <span>${s.isTvFixed ? '📺' : '📱'}</span>
+            <div class="p-2.5 rounded-xl border ${cardStyle} flex flex-col justify-between text-[11px] space-y-1.5">
+              <div class="flex justify-between items-center gap-1">
+                <input type="text" value="${pName}" onchange="updateSlotMeta('${acc.id}', ${s.slotNum}, 'profileName', this.value)" class="w-full bg-transparent border-b border-slate-200 pb-0.5 text-[11px] font-semibold text-slate-800 focus:outline-none focus:border-slate-900">
+                <span class="text-xs">${s.isTvFixed ? '📺' : '📱'}</span>
               </div>
               <div class="flex items-center gap-1 text-[10px]">
-                <span class="text-gray-500">PIN:</span>
-                <input type="text" value="${s.pin}" onchange="updateSlotMeta('${acc.id}', ${s.slotNum}, 'pin', this.value)" title="แก้ไขรหัส PIN" class="w-full font-mono bg-white/80 px-1 py-0.5 rounded border border-black/10 text-[10px] text-center focus:outline-none">
+                <span class="text-slate-400">PIN:</span>
+                <input type="text" value="${s.pin}" onchange="updateSlotMeta('${acc.id}', ${s.slotNum}, 'pin', this.value)" class="w-full font-mono bg-transparent border-b border-slate-200 text-[11px] text-center focus:outline-none focus:border-slate-900">
               </div>
-              <div class="truncate font-medium">
-                ${isOccupied ? `👤 ${s.customer}` : (s.isTvFixed ? '📺 ว่าง (ฟิกทีวี)' : '📱 ว่าง (มือถือ)')}
+              <div class="truncate text-[11px] ${isOccupied ? 'font-medium text-slate-900' : 'text-emerald-600 font-medium'}">
+                ${isOccupied ? s.customer : (s.isTvFixed ? 'ว่าง (ทีวี)' : 'ว่าง (มือถือ)')}
               </div>
-              <div class="flex justify-between items-center text-[10px] pt-0.5 border-t border-black/5">
-                <span>${statusLabel}</span>
+              <div class="flex justify-between items-center text-[10px] pt-1 border-t border-slate-100">
+                <span class="text-slate-400">${statusLabel}</span>
                 ${isOccupied
-                  ? `<button type="button" onclick="clearSlot('${acc.id}', ${s.slotNum})" class="text-rose-500 hover:underline font-semibold">เคลียร์จอ</button>`
-                  : `<button type="button" onclick="toggleSlotTvFix('${acc.id}', ${s.slotNum})" class="text-indigo-600 hover:underline font-semibold" title="สลับประเภทจอ">${s.isTvFixed ? 'ตั้งเป็นมือถือ' : 'ฟิกทีวี'}</button>`
+                  ? `<button type="button" onclick="clearSlot('${acc.id}', ${s.slotNum})" class="text-rose-600 hover:underline font-medium">เคลียร์</button>`
+                  : `<button type="button" onclick="toggleSlotTvFix('${acc.id}', ${s.slotNum})" class="text-slate-500 hover:text-slate-900 underline">${s.isTvFixed ? 'ตั้งมือถือ' : 'ฟิกทีวี'}</button>`
                 }
               </div>
             </div>
@@ -1429,23 +1184,21 @@
         }).join('');
 
         return `
-          <div class="bg-white p-3.5 rounded-2xl border border-pink-100 shadow-xs space-y-2.5">
-            <div class="flex flex-wrap justify-between items-start gap-2 border-b border-pink-50 pb-2">
-              <div class="space-y-1">
-                <p class="text-xs font-bold text-gray-800">📧 ${acc.email}</p>
-                <p class="text-[11px] text-gray-500">🔑 รหัส: <span class="font-mono text-pink-600">${acc.pass}</span> | ต้นทุน: ${acc.cost}฿</p>
-                <div class="flex flex-wrap items-center gap-1.5">
-                  ${masterBadge}
-                </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200/80 space-y-3">
+            <div class="flex flex-wrap justify-between items-start gap-2 pb-2.5 border-b border-slate-100">
+              <div class="space-y-0.5">
+                <p class="text-xs font-semibold text-slate-900">${acc.email}</p>
+                <p class="text-[11px] text-slate-500">รหัส: <span class="font-mono text-slate-800">${acc.pass}</span> • ต้นทุน ${acc.cost} ฿</p>
+                <div>${masterBadge}</div>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${freeCount > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}">
-                  ว่าง ${freeCount}/5 จอ
+                <span class="text-[11px] font-medium px-2.5 py-1 rounded-lg ${freeCount > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}">
+                  ว่าง ${freeCount}/5
                 </span>
-                <button type="button" onclick="deleteAccount('${acc.id}')" class="text-xs text-rose-400 hover:text-rose-600 p-1" title="ลบบัญชี">🗑️</button>
+                <button type="button" onclick="deleteAccount('${acc.id}')" class="text-xs text-slate-400 hover:text-rose-600 p-1" title="ลบบัญชี">🗑️</button>
               </div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
               ${slotsHtml}
             </div>
           </div>
@@ -1465,23 +1218,23 @@
             saveData();
             renderAccounts();
             renderCalendarAndAlerts();
-            showToast(`เคลียร์จอ ${slotNum} ว่างเรียบร้อย!`, '✨');
+            showToast(`เคลียร์จอ ${slotNum} เรียบร้อย`, '✨');
           }
         }
       });
     }
 
     function deleteAccount(accId) {
-      showConfirm('ต้องการลบบัญชีนี้ออกจากคลังใช่ไหมคะ? (ประวัติต้นทุนและยอดขายในกราฟกำไรจะยังถูกเก็บไว้ครบ)', () => {
+      showConfirm('ต้องการลบบัญชีนี้ออกจากคลังใช่ไหมคะ? (ประวัติยอดขายและต้นทุนจะยังอยู่ครบ)', () => {
         accounts = accounts.filter(a => a.id !== accId);
         saveData();
         renderAccounts();
         renderCalendarAndAlerts();
-        showToast('ลบบัญชีออกจากคลังแล้ว', '🗑️');
+        showToast('ลบบัญชีเรียบร้อย', '🗑️');
       });
     }
 
-    // ================= TAB 3: จอว่าง & แจ้งเตือนหมดอายุ =================
+    // ================= TAB 3: แจ้งเตือน & จอว่าง =================
     function updateAlertBadge() {
       let urgentCount = 0;
       accounts.forEach(acc => {
@@ -1507,24 +1260,18 @@
 
     function setAlertFilter(filterType) {
       currentAlertFilter = filterType;
-      const btns = {
-        all: { el: document.getElementById('filterAllBtn'), border: 'border-pink-400' },
-        free: { el: document.getElementById('filterFreeBtn'), border: 'border-emerald-400' },
-        expiring: { el: document.getElementById('filterExpiringBtn'), border: 'border-rose-400' }
-      };
-
-      Object.keys(btns).forEach(key => {
-        const item = btns[key];
-        if (!item.el) return;
-        item.el.classList.remove('border-pink-400', 'border-emerald-400', 'border-rose-400', 'shadow-xs');
+      const btns = ['all', 'free', 'expiring'];
+      btns.forEach(key => {
+        const el = document.getElementById('filter' + key.charAt(0).toUpperCase() + key.slice(1) + 'Btn');
+        if (!el) return;
         if (key === filterType) {
-          item.el.classList.add(item.border, 'shadow-xs');
-          item.el.classList.remove('border-transparent');
+          el.classList.add('border-slate-900');
+          el.classList.remove('border-transparent');
         } else {
-          item.el.classList.add('border-transparent');
+          el.classList.remove('border-slate-900');
+          el.classList.add('border-transparent');
         }
       });
-
       renderCalendarAndAlerts();
     }
 
@@ -1538,9 +1285,6 @@
       const titleEl = document.getElementById('alertListTitle');
       let totalSlots = 0;
       let freeSlots = 0;
-      let freeMobileTotal = 0;
-      let freeTvTotal = 0;
-      let minSellableAll = Infinity;
       let maxSellableAll = 0;
       let expiringSlots = 0;
       const allSlots = [];
@@ -1549,10 +1293,7 @@
       accounts.forEach(acc => {
         const masterLeft = getDaysRemaining(acc.expireDate);
         const isMasterValid = masterLeft !== null && masterLeft > 0;
-
-        if (masterLeft !== null) {
-          allMasters.push({ ...acc, masterLeft });
-        }
+        if (masterLeft !== null) allMasters.push({ ...acc, masterLeft });
 
         acc.slots.forEach(s => {
           totalSlots++;
@@ -1560,14 +1301,7 @@
           if (!s.customer) {
             if (isMasterValid) {
               freeSlots++;
-              if (s.isTvFixed) freeTvTotal++;
-              else freeMobileTotal++;
-
-              const accMax = Math.min(30, masterLeft);
-              if (accMax >= 1) {
-                minSellableAll = Math.min(minSellableAll, 1);
-                maxSellableAll = Math.max(maxSellableAll, accMax);
-              }
+              maxSellableAll = Math.max(maxSellableAll, Math.min(30, masterLeft));
             }
           } else if (daysLeft !== null && daysLeft <= 1) {
             expiringSlots++;
@@ -1584,103 +1318,47 @@
         });
       });
 
-      document.getElementById('statAllSlots').textContent = `${totalSlots} จอ`;
-      document.getElementById('statFreeSlots').textContent = `${freeSlots} จอ`;
-      document.getElementById('statExpiringSlots').textContent = `${expiringSlots} จอ`;
-      document.getElementById('alertFreeMobileTotal').textContent = `${freeMobileTotal} จอ`;
-      document.getElementById('alertFreeTvTotal').textContent = `${freeTvTotal} จอ`;
+      document.getElementById('statAllSlots').textContent = totalSlots;
+      document.getElementById('statFreeSlots').textContent = freeSlots;
+      document.getElementById('statExpiringSlots').textContent = expiringSlots;
+      document.getElementById('alertGlobalSellableDays').textContent = freeSlots > 0 ? `ขายได้สูงสุด ${maxSellableAll} วัน` : 'ไม่มีจอว่าง';
 
-      const globalSellableEl = document.getElementById('alertGlobalSellableDays');
-      if (freeSlots > 0 && maxSellableAll >= 1) {
-        globalSellableEl.textContent = `ขายได้: ต่ำสุด ${minSellableAll} วัน - สูงสุด ${maxSellableAll} วัน`;
-      } else {
-        globalSellableEl.textContent = `ไม่มีจอว่างพร้อมขาย`;
-      }
-
-      // กล่องแจ้งเตือนบัญชีแม่ (คลิกเปิด/ปิดรายการได้ไม่เกะกะ)
       const masterBox = document.getElementById('masterExpiryAlertBox');
       if (currentAlertFilter !== 'free') {
         allMasters.sort((a, b) => a.masterLeft - b.masterLeft);
-        const expiredTodayMasters = allMasters.filter(m => m.masterLeft === 0);
-        const expiredPastMasters = allMasters.filter(m => m.masterLeft < 0);
         const urgentMasters = allMasters.filter(m => m.masterLeft <= 0);
 
         const renderMasterCard = (m) => {
           const isExpired = m.masterLeft <= 0;
-          const isToday = m.masterLeft === 0;
-          const isNear = m.masterLeft > 0 && m.masterLeft <= 3;
-          const boxStyle = isToday
-            ? 'bg-rose-100 border-rose-400 text-rose-900 shadow-2xs'
-            : isExpired
-              ? 'bg-red-50 border-red-300 text-red-800'
-              : isNear
-                ? 'bg-amber-100/90 border-amber-300 text-amber-800'
-                : 'bg-purple-50/90 border-purple-200 text-purple-800';
-          const statusBadge = m.masterLeft < 0
-            ? `หมดอายุแล้ว ${Math.abs(m.masterLeft)} วัน`
-            : m.masterLeft === 0
-              ? '🔥 หมดอายุวันนี้!'
-              : `เหลือ ${m.masterLeft} วัน`;
+          const badge = m.masterLeft < 0 ? `หมดแล้ว ${Math.abs(m.masterLeft)} วัน` : m.masterLeft === 0 ? 'หมดวันนี้!' : `เหลือ ${m.masterLeft} วัน`;
           return `
-            <div class="${boxStyle} border p-2.5 rounded-2xl text-xs flex flex-col justify-between">
-              <div class="flex justify-between items-center gap-1">
-                <span class="font-bold truncate">${isToday ? '🚨' : isExpired ? '❌' : isNear ? '⚠️' : '🏠'} ${m.email}</span>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 shrink-0">${statusBadge}</span>
+            <div class="bg-white border ${isExpired ? 'border-rose-200' : 'border-slate-200'} p-2.5 rounded-xl text-xs flex justify-between items-center">
+              <div class="truncate pr-2">
+                <p class="font-medium text-slate-800 truncate">${m.email}</p>
+                <p class="text-[10px] text-slate-400">ครบกำหนด: ${formatThaiDate(m.expireDate)}</p>
               </div>
-              <p class="text-[10px] opacity-85 mt-1">📅 ครบกำหนด: ${formatThaiDate(m.expireDate)}</p>
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md ${isExpired ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'} shrink-0">${badge}</span>
             </div>
           `;
         };
 
-        let detailSectionHtml = '';
+        let detailHtml = '';
         if (masterViewMode === 'today') {
-          detailSectionHtml = `
-            <div class="space-y-1.5 pt-2 border-t border-purple-100">
-              <div class="flex justify-between items-center">
-                <h3 class="text-xs font-bold text-rose-600">🚨 รายการบัญชีแม่หมดอายุวันนี้ & หมดอายุแล้ว (${urgentMasters.length} บ้าน)</h3>
-                <button type="button" onclick="toggleMasterView(null)" class="text-[10px] text-gray-500 hover:text-rose-600 bg-gray-100 px-2 py-0.5 rounded-lg">✕ ปิด</button>
-              </div>
-              ${urgentMasters.length > 0
-                ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">${urgentMasters.map(renderMasterCard).join('')}</div>`
-                : `<p class="text-[11px] text-gray-400 bg-gray-50 px-3 py-2 rounded-xl">ไม่มีบัญชีแม่ที่หมดอายุวันนี้ค่ะ 🌸</p>`
-              }
-            </div>
-          `;
+          detailHtml = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200/70">${urgentMasters.length ? urgentMasters.map(renderMasterCard).join('') : '<p class="text-xs text-slate-400 py-2">ไม่มีบัญชีแม่ที่หมดอายุวันนี้</p>'}</div>`;
         } else if (masterViewMode === 'all') {
-          detailSectionHtml = `
-            <div class="space-y-1.5 pt-2 border-t border-purple-100">
-              <div class="flex justify-between items-center">
-                <h3 class="text-xs font-bold text-purple-700">🏠 รายการบัญชีแม่ทั้งหมดในคลัง (${allMasters.length} บ้าน)</h3>
-                <button type="button" onclick="toggleMasterView(null)" class="text-[10px] text-gray-500 hover:text-purple-700 bg-gray-100 px-2 py-0.5 rounded-lg">✕ ปิด</button>
-              </div>
-              ${allMasters.length > 0
-                ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">${allMasters.map(renderMasterCard).join('')}</div>`
-                : `<p class="text-[11px] text-gray-400 bg-gray-50 px-3 py-2 rounded-xl">ยังไม่มีบัญชีแม่ในคลังค่ะ</p>`
-              }
-            </div>
-          `;
+          detailHtml = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200/70">${allMasters.map(renderMasterCard).join('')}</div>`;
         }
 
         masterBox.innerHTML = `
-          <div class="space-y-2.5 bg-white/80 p-2.5 rounded-2xl border border-purple-100">
-            <div class="grid grid-cols-3 gap-2 text-center text-xs">
-              <button type="button" onclick="toggleMasterView('all')" class="bg-purple-50 border-2 ${masterViewMode === 'all' ? 'border-purple-500 shadow-xs' : 'border-purple-200 hover:border-purple-400'} p-2 rounded-xl transition cursor-pointer">
-                <p class="text-[10px] text-purple-600 font-semibold">🏠 บัญชีแม่ทั้งหมด</p>
-                <p class="text-sm sm:text-base font-bold text-purple-800">${allMasters.length} บ้าน</p>
-                <span class="text-[9px] text-purple-500 block">${masterViewMode === 'all' ? '▲ กดซ่อน' : '▼ กดดู'}</span>
-              </button>
-              <button type="button" onclick="toggleMasterView('today')" class="bg-rose-50 border-2 ${masterViewMode === 'today' ? 'border-rose-500 shadow-xs' : 'border-rose-300 hover:border-rose-400'} p-2 rounded-xl transition cursor-pointer">
-                <p class="text-[10px] text-rose-600 font-semibold">🚨 หมดอายุวันนี้</p>
-                <p class="text-sm sm:text-base font-bold text-rose-700">${expiredTodayMasters.length} บ้าน</p>
-                <span class="text-[9px] text-rose-500 block">${masterViewMode === 'today' ? '▲ กดซ่อน' : '▼ กดดู'}</span>
-              </button>
-              <button type="button" onclick="toggleMasterView('today')" class="bg-gray-100 border-2 ${masterViewMode === 'today' ? 'border-gray-400' : 'border-gray-200 hover:border-gray-300'} p-2 rounded-xl transition cursor-pointer">
-                <p class="text-[10px] text-gray-600 font-semibold">❌ หมดอายุไปแล้ว</p>
-                <p class="text-sm sm:text-base font-bold text-gray-700">${expiredPastMasters.length} บ้าน</p>
-                <span class="text-[9px] text-gray-500 block">${masterViewMode === 'today' ? '▲ กดซ่อน' : '▼ กดดู'}</span>
-              </button>
+          <div class="bg-slate-50/80 border border-slate-200/70 p-3 rounded-2xl space-y-2.5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-medium text-slate-700">สถานะบัญชีแม่ (${allMasters.length} บ้าน • หมดอายุ ${urgentMasters.length} บ้าน)</span>
+              <div class="flex gap-1.5">
+                <button type="button" onclick="toggleMasterView('today')" class="text-[11px] px-2.5 py-1 rounded-lg border ${masterViewMode === 'today' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200'}">ดูที่หมดอายุ</button>
+                <button type="button" onclick="toggleMasterView('all')" class="text-[11px] px-2.5 py-1 rounded-lg border ${masterViewMode === 'all' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200'}">ดูทั้งหมด</button>
+              </div>
             </div>
-            ${detailSectionHtml}
+            ${detailHtml}
           </div>
         `;
       } else {
@@ -1688,43 +1366,21 @@
       }
 
       if (currentAlertFilter === 'free') {
-        titleEl.textContent = '🟢 รายการจอว่างพร้อมขาย (แยกตามบัญชีที่ยังไม่หมดอายุ)';
-        const accountsWithFree = accounts.map(acc => {
-          const masterLeft = getDaysRemaining(acc.expireDate);
-          return {
-            ...acc,
-            masterLeft,
-            freeList: (masterLeft !== null && masterLeft > 0) ? acc.slots.filter(s => !s.customer) : []
-          };
-        }).filter(acc => acc.freeList.length > 0);
-
-        if (accountsWithFree.length === 0) {
-          container.innerHTML = `<div class="text-center py-8 text-xs text-gray-400 bg-gray-50 rounded-2xl">ตอนนี้ไม่มีจอว่างพร้อมขายเลยค่ะ 🎉</div>`;
+        titleEl.textContent = 'จอว่างพร้อมขาย';
+        const freeList = allSlots.filter(s => !s.customer && s.isMasterValid);
+        if (freeList.length === 0) {
+          container.innerHTML = `<div class="text-center py-8 text-xs text-slate-400">ไม่มีจอว่างพร้อมขายในขณะนี้</div>`;
           return;
         }
-
-        container.innerHTML = accountsWithFree.map(acc => `
-          <div class="bg-emerald-50/50 border border-emerald-200 p-3 rounded-2xl space-y-2">
-            <div class="flex justify-between items-center border-b border-emerald-100 pb-1.5">
-              <div>
-                <p class="text-xs font-bold text-emerald-800">📧 ${acc.email}</p>
-                <p class="text-[10px] text-gray-500">แอคแม่หมด: ${formatThaiDate(acc.expireDate)} (เหลือ ${acc.masterLeft} วัน • ขายได้สูงสุด ${Math.min(30, acc.masterLeft)} วัน)</p>
-              </div>
-              <span class="bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">ว่าง ${acc.freeList.length} จอ</span>
+        container.innerHTML = freeList.map(s => `
+          <div class="bg-white border border-slate-200/80 p-3 rounded-2xl flex justify-between items-center text-xs">
+            <div>
+              <p class="font-semibold text-slate-800">${s.profileName || `จอ ${s.slotNum}`} ${s.isTvFixed ? '📺 ทีวี' : '📱 มือถือ'} <span class="text-slate-400 font-normal">• PIN ${s.pin}</span></p>
+              <p class="text-[11px] text-slate-500 mt-0.5">${s.email} (เหลือ ${s.masterLeft} วัน)</p>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-              ${acc.freeList.map(s => `
-                <div class="bg-white p-2 rounded-xl border border-emerald-100 flex justify-between items-center text-xs">
-                  <div>
-                    <span class="font-bold text-gray-700">${s.profileName || `จอ ${s.slotNum}`} ${s.isTvFixed ? '📺 (ฟิกทีวี)' : '📱 (มือถือ)'}</span>
-                    <span class="text-[10px] text-gray-400 block font-mono">PIN: ${s.pin}</span>
-                  </div>
-                  <button type="button" onclick="quickBook('${acc.id}', ${s.slotNum})" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-semibold px-3 py-1 rounded-lg shadow-xs">
-                    ขายจอนี้
-                  </button>
-                </div>
-              `).join('')}
-            </div>
+            <button type="button" onclick="quickBook('${s.accId}', ${s.slotNum})" class="bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-medium px-3.5 py-1.5 rounded-xl transition">
+              ขายจอนี้
+            </button>
           </div>
         `).join('');
         return;
@@ -1732,32 +1388,28 @@
 
       let filteredSlots = allSlots;
       if (currentAlertFilter === 'expiring') {
-        titleEl.textContent = '⏰ รายการลูกค้าที่ใกล้หมดอายุ / หมดอายุแล้ว';
+        titleEl.textContent = 'รายการใกล้หมดอายุ / หมดอายุแล้ว';
         filteredSlots = allSlots.filter(s => s.customer && s.daysLeft !== null && s.daysLeft <= 1);
       } else {
-        titleEl.textContent = '🔔 สถานะจอทั้งหมด (เรียงตามวันหมดอายุ)';
+        titleEl.textContent = 'สถานะจอทั้งหมด (เรียงตามวันหมดอายุ)';
       }
 
-      filteredSlots.sort((a, b) => {
-        const valA = a.customer ? (a.daysLeft ?? 999) : 500;
-        const valB = b.customer ? (b.daysLeft ?? 999) : 500;
-        return valA - valB;
-      });
+      filteredSlots.sort((a, b) => (a.customer ? (a.daysLeft ?? 999) : 500) - (b.customer ? (b.daysLeft ?? 999) : 500));
 
       if (filteredSlots.length === 0) {
-        container.innerHTML = `<p class="text-center text-xs text-gray-400 py-6">ไม่มีรายการในหมวดหมู่นี้ค่ะ 🌸</p>`;
+        container.innerHTML = `<p class="text-center text-xs text-slate-400 py-8">ไม่มีรายการในหมวดหมู่นี้</p>`;
         return;
       }
 
       container.innerHTML = filteredSlots.map(item => {
         if (!item.customer) {
           return `
-            <div class="bg-emerald-50/60 border border-emerald-200 p-2.5 rounded-2xl flex justify-between items-center text-xs">
+            <div class="bg-slate-50/70 border border-slate-200/70 p-3 rounded-2xl flex justify-between items-center text-xs">
               <div>
-                <span class="font-bold text-emerald-700">🟢 จอว่าง (${item.profileName || `จอ ${item.slotNum}`} ${item.isTvFixed ? '- ทีวี' : ''})</span>
-                <p class="text-[11px] text-gray-500">${item.email} (PIN: ${item.pin})</p>
+                <span class="font-medium text-emerald-700">ว่าง • ${item.profileName || `จอ ${item.slotNum}`} ${item.isTvFixed ? '(ทีวี)' : ''}</span>
+                <p class="text-[11px] text-slate-500">${item.email}</p>
               </div>
-              <button type="button" onclick="quickBook('${item.accId}', ${item.slotNum})" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-semibold px-3 py-1.5 rounded-xl shadow-xs">
+              <button type="button" onclick="quickBook('${item.accId}', ${item.slotNum})" class="bg-white border border-slate-200 hover:border-slate-900 text-slate-800 text-[11px] font-medium px-3 py-1 rounded-xl transition">
                 ขายจอนี้
               </button>
             </div>
@@ -1765,24 +1417,19 @@
         }
 
         const isUrgent = item.daysLeft !== null && item.daysLeft <= 1;
-        const statusText = item.daysLeft < 0
-          ? `หมดอายุแล้ว ${Math.abs(item.daysLeft)} วัน`
-          : item.daysLeft === 0
-            ? 'หมดอายุวันนี้!'
-            : `เหลือ ${item.daysLeft} วัน`;
+        const statusText = item.daysLeft < 0 ? `หมดอายุ ${Math.abs(item.daysLeft)} วัน` : item.daysLeft === 0 ? 'หมดอายุวันนี้' : `เหลือ ${item.daysLeft} วัน`;
 
         return `
-          <div class="${isUrgent ? 'bg-rose-50 border-rose-200' : 'bg-white border-pink-100'} border p-2.5 rounded-2xl flex justify-between items-center text-xs">
+          <div class="bg-white border ${isUrgent ? 'border-rose-200' : 'border-slate-200/80'} p-3 rounded-2xl flex justify-between items-center text-xs">
             <div>
-              <div class="flex flex-wrap items-center gap-1.5">
-                <span class="font-bold ${isUrgent ? 'text-rose-600' : 'text-gray-700'}">👤 ${item.customer}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full ${isUrgent ? 'bg-rose-200 text-rose-800 font-bold' : 'bg-pink-100 text-pink-700'}">${statusText}</span>
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-slate-900">${item.customer}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-md font-medium ${isUrgent ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}">${statusText}</span>
               </div>
-              <p class="text-[11px] text-gray-600 mt-0.5 font-medium">📅 หมดอายุวันที่: <span class="text-pink-600 font-bold">${formatThaiDate(item.expireDate)}</span></p>
-              <p class="text-[10px] text-gray-400">${item.email} • ${item.profileName || `จอ ${item.slotNum}`} (${item.device === 'tv' ? 'ทีวี' : 'มือถือ'})</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">${item.email} • ${item.profileName || `จอ ${item.slotNum}`} • หมด ${formatThaiDate(item.expireDate)}</p>
             </div>
-            <button type="button" onclick="clearSlot('${item.accId}', ${item.slotNum})" class="text-[11px] bg-white border border-gray-200 hover:bg-gray-100 text-gray-600 px-2.5 py-1 rounded-xl shrink-0">
-              รีเซ็ตจอ
+            <button type="button" onclick="clearSlot('${item.accId}', ${item.slotNum})" class="text-[11px] text-slate-500 hover:text-slate-900 underline px-2 py-1 shrink-0">
+              รีเซ็ต
             </button>
           </div>
         `;
@@ -1801,7 +1448,6 @@
       if (!slot) return;
 
       switchTab('form');
-      // ปรับจำนวนวันให้ไม่เกินอายุคงเหลือของแอคแม่เพื่อให้เมลนี้แสดงในรายการทันที
       const currentDays = Number(document.getElementById('durationDays').value) || 7;
       if (currentDays > masterLeft) {
         const validDays = [30, 15, 10, 7, 5, 3, 2, 1].find(d => d <= masterLeft) || 1;
@@ -1813,25 +1459,309 @@
       onAccountSelect();
       document.getElementById('selectProfile').value = slotNum;
       onProfileSelect();
-      showToast(`เลือก ${acc.email} จอ ${slotNum} ให้แล้วค่ะ กรอกชื่อลูกค้าได้เลย!`, '💌');
+      showToast(`เลือก ${acc.email} จอ ${slotNum} ให้แล้วค่ะ`, '✨');
     }
 
-    // ================= TAB 4: ปรับแต่งเทมเพลตฟอร์ม =================
+    // ================= TAB 4: ประวัติการสั่งซื้อตัวแทน & รายเดือน =================
+    function initAgentHistoryTab() {
+      const monthInput = document.getElementById('agentMonthFilter');
+      if (!monthInput.value) {
+        monthInput.value = toLocalYMD(new Date()).slice(0, 7);
+      }
+      onAgentPeriodModeChange();
+      renderYearlyChart();
+    }
+
+    function onAgentPeriodModeChange() {
+      const mode = document.getElementById('agentPeriodMode').value;
+      const monthInput = document.getElementById('agentMonthFilter');
+      monthInput.classList.toggle('hidden', mode !== 'month');
+      renderAgentDirectory();
+    }
+
+    function renderAgentDirectory() {
+      const mode = document.getElementById('agentPeriodMode').value; // 'month' | 'all'
+      const selectedMonth = document.getElementById('agentMonthFilter').value || toLocalYMD(new Date()).slice(0, 7);
+
+      const filteredSales = salesHistory.filter(s => {
+        if (!s.date) return false;
+        if (mode === 'month') return s.date.startsWith(selectedMonth);
+        return true;
+      });
+
+      const effectiveCosts = costHistory.length > 0
+        ? costHistory
+        : accounts.map(a => ({ date: a.createdDate || toLocalYMD(new Date()), amount: Number(a.cost || 0) }));
+
+      const filteredCosts = effectiveCosts.filter(c => {
+        if (!c.date) return false;
+        if (mode === 'month') return c.date.startsWith(selectedMonth);
+        return true;
+      });
+
+      const totalRev = filteredSales.reduce((sum, s) => sum + Number(s.amount || 0), 0);
+      const totalCost = filteredCosts.reduce((sum, c) => sum + Number(c.amount || 0), 0);
+      const netProfit = totalRev - totalCost;
+
+      document.getElementById('agentTotalRevText').textContent = `${totalRev.toLocaleString()} ฿`;
+      const profitEl = document.getElementById('agentNetProfitText');
+      profitEl.textContent = `${netProfit.toLocaleString()} ฿`;
+      profitEl.className = `text-base sm:text-xl font-semibold mt-0.5 ${netProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+      document.getElementById('agentOrderCountText').textContent = `${filteredSales.length} รายการ`;
+
+      // จัดกลุ่มตามชื่อตัวแทน/ลูกค้า
+      const grouped = {};
+      filteredSales.forEach(s => {
+        const name = s.customer || 'ตัวแทนทั่วไป';
+        if (!grouped[name]) {
+          grouped[name] = { name, totalAmount: 0, count: 0, lastDate: s.date };
+        }
+        grouped[name].totalAmount += Number(s.amount || 0);
+        grouped[name].count += 1;
+        if (s.date > grouped[name].lastDate) grouped[name].lastDate = s.date;
+      });
+
+      const agentsList = Object.values(grouped).sort((a, b) => b.totalAmount - a.totalAmount);
+      document.getElementById('agentCountBadge').textContent = `${agentsList.length} คน`;
+
+      const listEl = document.getElementById('agentDirectoryList');
+      if (agentsList.length === 0) {
+        listEl.innerHTML = `<p class="text-center text-xs text-slate-400 py-8">ไม่มีรายการสั่งซื้อในช่วงเวลานี้</p>`;
+        return;
+      }
+
+      // เลือกคนแรกให้อัตโนมัติหากยังไม่ได้เลือกหรือไม่มีชื่อในเดือนนั้น
+      if (!selectedAgentName || !agentsList.some(a => a.name === selectedAgentName)) {
+        selectedAgentName = agentsList[0].name;
+      }
+
+      listEl.innerHTML = agentsList.map(agent => {
+        const isSelected = agent.name === selectedAgentName;
+        return `
+          <button type="button" onclick="selectAgentForDetails('${encodeURIComponent(agent.name)}')" class="w-full text-left p-3 rounded-xl border transition flex justify-between items-center gap-2 ${isSelected ? 'bg-slate-900 text-white border-slate-900 shadow-xs' : 'bg-white hover:bg-slate-100/70 text-slate-800 border-slate-200/70'}">
+            <div class="min-w-0">
+              <p class="text-xs font-semibold truncate">${agent.name}</p>
+              <p class="text-[10px] ${isSelected ? 'text-slate-300' : 'text-slate-400'}">สั่ง ${agent.count} ครั้ง • ล่าสุด ${formatThaiDate(agent.lastDate)}</p>
+            </div>
+            <span class="text-xs font-semibold shrink-0 ${isSelected ? 'text-emerald-300' : 'text-slate-900'}">${agent.totalAmount.toLocaleString()} ฿</span>
+          </button>
+        `;
+      }).join('');
+
+      selectAgentForDetails(encodeURIComponent(selectedAgentName), false);
+    }
+
+    function selectAgentForDetails(encodedName, reRenderList = true) {
+      selectedAgentName = decodeURIComponent(encodedName);
+      if (reRenderList) {
+        renderAgentDirectory();
+        return;
+      }
+
+      // ดึงประวัติทั้งหมดของตัวแทนคนนี้ตั้งแต่วันแรกจนถึงปัจจุบัน
+      const allOrdersOfAgent = salesHistory
+        .filter(s => (s.customer || 'ตัวแทนทั่วไป') === selectedAgentName)
+        .slice()
+        .sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+
+      const subFilterEl = document.getElementById('selectedAgentMonthSubFilter');
+      if (allOrdersOfAgent.length === 0) {
+        subFilterEl.classList.add('hidden');
+        document.getElementById('selectedAgentTitle').textContent = selectedAgentName;
+        document.getElementById('selectedAgentSubtitle').textContent = 'ไม่พบประวัติคำสั่งซื้อ';
+        document.getElementById('selectedAgentOrdersContainer').innerHTML = '';
+        return;
+      }
+
+      // สร้างตัวเลือกเดือนที่ตัวแทนคนนี้เคยสั่งซื้อทั้งหมด
+      const monthsSet = Array.from(new Set(allOrdersOfAgent.map(o => o.date.slice(0, 7)))).sort().reverse();
+      const prevMonthChoice = subFilterEl.value;
+      subFilterEl.innerHTML = `<option value="ALL">ทุกเดือน (${monthsSet.length} เดือน)</option>` +
+        monthsSet.map(ym => `<option value="${ym}">เดือน ${formatThaiMonthYear(ym)}</option>`).join('');
+
+      // ถ้าด้านบนเลือกดูรายเดือน ให้ซิงค์ตัวกรองย่อยตามเดือนนั้นถ้ามีข้อมูล
+      const topMode = document.getElementById('agentPeriodMode').value;
+      const topMonth = document.getElementById('agentMonthFilter').value;
+      if (topMode === 'month' && monthsSet.includes(topMonth)) {
+        subFilterEl.value = topMonth;
+      } else if (prevMonthChoice && (prevMonthChoice === 'ALL' || monthsSet.includes(prevMonthChoice))) {
+        subFilterEl.value = prevMonthChoice;
+      } else {
+        subFilterEl.value = 'ALL';
+      }
+      subFilterEl.classList.remove('hidden');
+
+      renderSelectedAgentOrders();
+    }
+
+    function renderSelectedAgentOrders() {
+      if (!selectedAgentName) return;
+      const monthSubFilter = document.getElementById('selectedAgentMonthSubFilter').value;
+
+      const allOrdersOfAgent = salesHistory
+        .filter(s => (s.customer || 'ตัวแทนทั่วไป') === selectedAgentName)
+        .slice()
+        .sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+
+      const firstOrderDate = allOrdersOfAgent.length ? allOrdersOfAgent[allOrdersOfAgent.length - 1].date : '-';
+      const ordersToDisplay = monthSubFilter === 'ALL'
+        ? allOrdersOfAgent
+        : allOrdersOfAgent.filter(o => o.date.startsWith(monthSubFilter));
+
+      const totalSpent = ordersToDisplay.reduce((sum, o) => sum + Number(o.amount || 0), 0);
+
+      document.getElementById('selectedAgentTitle').textContent = selectedAgentName;
+      document.getElementById('selectedAgentSubtitle').textContent =
+        `เริ่มสั่งครั้งแรก: ${formatThaiDate(firstOrderDate)} • ยอดรวมช่วงที่แสดง ${totalSpent.toLocaleString()} ฿ (${ordersToDisplay.length} ออเดอร์)`;
+
+      const container = document.getElementById('selectedAgentOrdersContainer');
+      if (ordersToDisplay.length === 0) {
+        container.innerHTML = `<p class="text-center text-xs text-slate-400 py-8">ไม่มีคำสั่งซื้อในเดือนที่เลือก</p>`;
+        return;
+      }
+
+      container.innerHTML = ordersToDisplay.map((ord, idx) => {
+        const orderNo = ordersToDisplay.length - idx;
+        const devLabel = ord.device === 'tv' ? '📺 ทีวี' : '📱 มือถือ';
+        return `
+          <div class="bg-slate-50/80 border border-slate-200/70 p-3 rounded-xl flex justify-between items-start gap-3 text-xs">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-semibold bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-md">#${orderNo}</span>
+                <span class="font-semibold text-slate-900">Netflix 4K (${ord.days} วัน) • ${devLabel}</span>
+              </div>
+              <p class="text-[11px] text-slate-500">
+                สั่งวันที่ <strong class="text-slate-700">${formatThaiDate(ord.date)}</strong> ${ord.time ? `เวลา ${ord.time} น.` : ''}
+                ${ord.expireDate ? `• หมดอายุ ${formatThaiDate(ord.expireDate)}` : ''}
+              </p>
+              ${ord.accountEmail ? `<p class="text-[10px] text-slate-400 font-mono">${ord.accountEmail} (${ord.profileLabel || '-'})</p>` : ''}
+            </div>
+            <span class="font-semibold text-emerald-600 bg-white border border-slate-200/80 px-2.5 py-1 rounded-lg shrink-0">
+              +${Number(ord.amount || 0).toLocaleString()} ฿
+            </span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderYearlyChart() {
+      const canvas = document.getElementById('profitLineChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      const effectiveCosts = costHistory.length > 0
+        ? costHistory
+        : accounts.map(a => ({ date: a.createdDate || toLocalYMD(new Date()), amount: Number(a.cost || 0) }));
+
+      const ymSet = new Set();
+      salesHistory.forEach(s => { if (s.date) ymSet.add(s.date.slice(0, 7)); });
+      effectiveCosts.forEach(c => { if (c.date) ymSet.add(c.date.slice(0, 7)); });
+
+      const sortedYm = Array.from(ymSet).sort();
+      const labels = sortedYm.length ? sortedYm.map(formatThaiMonthYear) : ['ไม่มีข้อมูล'];
+      const revSeries = sortedYm.length ? sortedYm.map(ym => salesHistory.filter(s => s.date?.startsWith(ym)).reduce((a, b) => a + Number(b.amount || 0), 0)) : [0];
+      const costSeries = sortedYm.length ? sortedYm.map(ym => effectiveCosts.filter(c => c.date?.startsWith(ym)).reduce((a, b) => a + Number(b.amount || 0), 0)) : [0];
+      const profitSeries = revSeries.map((r, i) => r - costSeries[i]);
+
+      if (lineChartInstance) lineChartInstance.destroy();
+      lineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'กำไรสุทธิ (฿)',
+              data: profitSeries,
+              borderColor: '#10b981',
+              borderWidth: 2,
+              pointRadius: 3,
+              tension: 0.3
+            },
+            {
+              label: 'รายรับ (฿)',
+              data: revSeries,
+              borderColor: '#0f172a',
+              borderWidth: 2,
+              pointRadius: 3,
+              tension: 0.3
+            },
+            {
+              label: 'ต้นทุน (฿)',
+              data: costSeries,
+              borderColor: '#94a3b8',
+              borderDash: [4, 4],
+              borderWidth: 2,
+              pointRadius: 2.5,
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10, family: 'Kanit' } } }
+          },
+          scales: {
+            y: { ticks: { font: { size: 10, family: 'Kanit' } } },
+            x: { ticks: { font: { size: 10, family: 'Kanit' } } }
+          }
+        }
+      });
+    }
+
+    function clearHistoryPrompt() {
+      showConfirm('ต้องการล้างประวัติยอดขายและต้นทุนทั้งหมดใช่ไหมคะ?', () => {
+        salesHistory = [];
+        costHistory = [];
+        selectedAgentName = null;
+        saveData();
+        renderAgentDirectory();
+        renderYearlyChart();
+        showToast('ล้างประวัติเรียบร้อยแล้ว', '🧹');
+      });
+    }
+
+    // ================= TAB 5: แก้ไขเทมเพลตฟอร์ม (อัปเดตทันที 100%) =================
     function switchTemplateEditorTarget(target) {
-      editingTemplateTarget = target;
+      editingTemplateTarget = (target === 'tv') ? 'tv' : 'mobile';
       const tvBtn = document.getElementById('editTplTvBtn');
       const mobBtn = document.getElementById('editTplMobileBtn');
       const editor = document.getElementById('templateEditor');
 
-      if (target === 'tv') {
-        tvBtn.className = 'flex-1 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white shadow-2xs transition';
-        mobBtn.className = 'flex-1 py-2 rounded-xl text-xs font-bold text-pink-700 hover:bg-white/70 transition';
+      if (editingTemplateTarget === 'tv') {
+        tvBtn.className = 'py-1.5 px-3 rounded-lg text-xs font-medium bg-slate-900 text-white transition';
+        mobBtn.className = 'py-1.5 px-3 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition';
         editor.value = tvTemplate;
       } else {
-        mobBtn.className = 'flex-1 py-2 rounded-xl text-xs font-bold bg-pink-500 text-white shadow-2xs transition';
-        tvBtn.className = 'flex-1 py-2 rounded-xl text-xs font-bold text-purple-700 hover:bg-white/70 transition';
+        mobBtn.className = 'py-1.5 px-3 rounded-lg text-xs font-medium bg-slate-900 text-white transition';
+        tvBtn.className = 'py-1.5 px-3 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition';
         editor.value = mobileTemplate;
       }
+    }
+
+    // อัปเดตค่าแบบเรียลไทม์ทันทีที่พิมพ์ เพื่อป้องกันกรณีผู้ใช้ลืมกดบันทึก
+    function onTemplateLiveInput() {
+      const val = document.getElementById('templateEditor').value;
+      if (editingTemplateTarget === 'tv') {
+        tvTemplate = val;
+        localStorage.setItem('nf_template_tv_v2', tvTemplate);
+      } else {
+        mobileTemplate = val;
+        localStorage.setItem('nf_template_mobile_v2', mobileTemplate);
+      }
+      generateFormPreview();
+    }
+
+    function insertVariable(varText) {
+      const editor = document.getElementById('templateEditor');
+      const start = editor.selectionStart || 0;
+      const end = editor.selectionEnd || 0;
+      const current = editor.value;
+      editor.value = current.substring(0, start) + varText + current.substring(end);
+      editor.focus();
+      editor.selectionStart = editor.selectionEnd = start + varText.length;
+      onTemplateLiveInput();
     }
 
     function saveTemplate() {
@@ -1842,495 +1772,41 @@
       }
       if (editingTemplateTarget === 'tv') {
         tvTemplate = val;
-        localStorage.setItem('nf_template_tv', tvTemplate);
+        localStorage.setItem('nf_template_tv_v2', tvTemplate);
       } else {
         mobileTemplate = val;
-        localStorage.setItem('nf_template_mobile', mobileTemplate);
-        formTemplate = val;
-        localStorage.setItem('nf_template', mobileTemplate);
+        localStorage.setItem('nf_template_mobile_v2', mobileTemplate);
+      }
+      // ซิงค์อุปกรณ์ในหน้าแรกให้ตรงกับฟอร์มที่เพิ่งบันทึก เพื่อกลับไปดูผลลัพธ์ได้ทันที
+      const devSelect = document.getElementById('deviceType');
+      if (devSelect) {
+        devSelect.value = editingTemplateTarget;
+        populateAccountDropdown();
       }
       generateFormPreview();
-      showToast(`บันทึกรูปแบบ${editingTemplateTarget === 'tv' ? 'ฟอร์มทีวี' : 'ฟอร์มมือถือ'}เรียบร้อยแล้วค่ะ!`, '💾');
+      showToast(`บันทึก${editingTemplateTarget === 'tv' ? 'ฟอร์มทีวี' : 'ฟอร์มมือถือ'}และอัปเดตหน้าส่งฟอร์มแล้ว!`, '✅');
     }
 
     function resetTemplate() {
       if (editingTemplateTarget === 'tv') {
         tvTemplate = DEFAULT_TV_TEMPLATE;
-        localStorage.setItem('nf_template_tv', tvTemplate);
+        localStorage.setItem('nf_template_tv_v2', tvTemplate);
         document.getElementById('templateEditor').value = tvTemplate;
       } else {
         mobileTemplate = DEFAULT_MOBILE_TEMPLATE;
-        localStorage.setItem('nf_template_mobile', mobileTemplate);
-        formTemplate = DEFAULT_MOBILE_TEMPLATE;
-        localStorage.setItem('nf_template', DEFAULT_MOBILE_TEMPLATE);
+        localStorage.setItem('nf_template_mobile_v2', mobileTemplate);
         document.getElementById('templateEditor').value = mobileTemplate;
       }
       generateFormPreview();
-      showToast(`คืนค่า${editingTemplateTarget === 'tv' ? 'ฟอร์มทีวี' : 'ฟอร์มมือถือ'}เริ่มต้นแล้วค่ะ`, '↩️');
+      showToast(`คืนค่า${editingTemplateTarget === 'tv' ? 'ฟอร์มทีวี' : 'ฟอร์มมือถือ'}เริ่มต้นแล้ว`, '↩️');
     }
 
-    // ================= TAB 5: กราฟวิเคราะห์กำไร (ย้อนหลังหลายเดือน / หลายปี & สลับกราฟวงกลม) =================
-    function initProfitPeriodSelectors() {
-      const yearSelect = document.getElementById('profitYearSelect');
-      const monthSelect = document.getElementById('profitMonthSelect');
-      const currentYear = new Date().getFullYear();
-
-      // รวบรวมปีที่มีข้อมูลทั้งหมด + ย้อนหลัง/ล่วงหน้า 5 ปี
-      const yearsSet = new Set([currentYear - 2, currentYear - 1, currentYear, currentYear + 1]);
-      salesHistory.forEach(s => {
-        if (s.date && s.date.length >= 4) yearsSet.add(Number(s.date.slice(0, 4)));
-      });
-      costHistory.forEach(c => {
-        if (c.date && c.date.length >= 4) yearsSet.add(Number(c.date.slice(0, 4)));
-      });
-
-      const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
-      const prevYear = yearSelect.value;
-      yearSelect.innerHTML = sortedYears.map(y => `<option value="${y}">ปี ${y + 543} (${y})</option>`).join('');
-      if (prevYear && sortedYears.includes(Number(prevYear))) {
-        yearSelect.value = prevYear;
-      } else {
-        yearSelect.value = String(currentYear);
-      }
-
-      if (!monthSelect.value) {
-        monthSelect.value = toLocalYMD(new Date()).slice(0, 7);
-      }
-      onProfitPeriodModeChange();
-    }
-
-    function onProfitPeriodModeChange() {
-      const mode = document.getElementById('profitPeriodMode').value;
-      const yearSelect = document.getElementById('profitYearSelect');
-      const monthSelect = document.getElementById('profitMonthSelect');
-
-      yearSelect.classList.toggle('hidden', mode !== 'year');
-      monthSelect.classList.toggle('hidden', mode !== 'month');
-      renderProfitTab();
-    }
-
-    function togglePieMode() {
-      pieChartMode = (pieChartMode === 'cost_vs_profit') ? 'device_profit' : 'cost_vs_profit';
-      renderProfitTab();
-    }
-
-    function renderProfitTab() {
-      const mode = document.getElementById('profitPeriodMode').value; // 'all' | 'year' | 'month'
-      const selectedYear = document.getElementById('profitYearSelect').value;
-      const selectedMonth = document.getElementById('profitMonthSelect').value;
-
-      // กรองรายการขายและรายการต้นทุนตามช่วงเวลาที่เลือก (รองรับย้อนหลังหลายเดือน หลายปี)
-      const filteredSales = salesHistory.filter(s => {
-        if (!s.date) return false;
-        if (mode === 'year') return s.date.startsWith(selectedYear);
-        if (mode === 'month') return s.date.startsWith(selectedMonth);
-        return true;
-      });
-
-      // ถ้า costHistory ว่างให้ดึงจาก accounts ปัจจุบันเป็นสำรอง
-      const effectiveCostList = costHistory.length > 0
-        ? costHistory
-        : accounts.map(a => ({ date: a.createdDate || toLocalYMD(new Date()), amount: Number(a.cost || 0) }));
-
-      const filteredCosts = effectiveCostList.filter(c => {
-        if (!c.date) return false;
-        if (mode === 'year') return c.date.startsWith(selectedYear);
-        if (mode === 'month') return c.date.startsWith(selectedMonth);
-        return true;
-      });
-
-      const totalRevenue = filteredSales.reduce((sum, s) => sum + Number(s.amount || 0), 0);
-      const totalCost = filteredCosts.reduce((sum, c) => sum + Number(c.amount || 0), 0);
-      const netProfit = totalRevenue - totalCost;
-
-      document.getElementById('totalRevenueText').textContent = `${totalRevenue.toLocaleString()} ฿`;
-      document.getElementById('totalCostText').textContent = `${totalCost.toLocaleString()} ฿`;
-      const netEl = document.getElementById('netProfitText');
-      netEl.textContent = `${netProfit.toLocaleString()} ฿`;
-      netEl.className = `text-base sm:text-xl font-bold mt-0.5 ${netProfit >= 0 ? 'text-emerald-700' : 'text-rose-600'}`;
-
-      // 1. สร้างข้อมูลกราฟหลักเปรียบเทียบ รายรับ vs ต้นทุน vs กำไร ตามช่วงเวลา
-      let labels = [];
-      let revSeries = [];
-      let costSeries = [];
-      let profitSeries = [];
-
-      if (mode === 'year') {
-        document.getElementById('mainChartTitle').textContent = `📊 เปรียบเทียบรายรับ - ต้นทุน - กำไร รายเดือน (ปี ${Number(selectedYear) + 543})`;
-        const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-        labels = thaiMonths;
-        revSeries = Array(12).fill(0);
-        costSeries = Array(12).fill(0);
-        filteredSales.forEach(s => {
-          const mIdx = Number(s.date.slice(5, 7)) - 1;
-          if (mIdx >= 0 && mIdx < 12) revSeries[mIdx] += Number(s.amount || 0);
-        });
-        filteredCosts.forEach(c => {
-          const mIdx = Number(c.date.slice(5, 7)) - 1;
-          if (mIdx >= 0 && mIdx < 12) costSeries[mIdx] += Number(c.amount || 0);
-        });
-        profitSeries = revSeries.map((r, i) => r - costSeries[i]);
-      } else if (mode === 'all') {
-        document.getElementById('mainChartTitle').textContent = `📊 เปรียบเทียบรายรับ - ต้นทุน - กำไร ย้อนหลังทุกเดือน/ปี`;
-        const ymSet = new Set();
-        filteredSales.forEach(s => ymSet.add(s.date.slice(0, 7)));
-        filteredCosts.forEach(c => ymSet.add(c.date.slice(0, 7)));
-        const sortedYm = Array.from(ymSet).sort();
-        if (sortedYm.length === 0) {
-          labels = ['ไม่มีข้อมูล'];
-          revSeries = [0];
-          costSeries = [0];
-          profitSeries = [0];
-        } else {
-          labels = sortedYm.map(ym => `${ym.slice(5, 7)}/${Number(ym.slice(0, 4)) + 543}`);
-          revSeries = sortedYm.map(ym => filteredSales.filter(s => s.date.startsWith(ym)).reduce((acc, cur) => acc + Number(cur.amount || 0), 0));
-          costSeries = sortedYm.map(ym => filteredCosts.filter(c => c.date.startsWith(ym)).reduce((acc, cur) => acc + Number(cur.amount || 0), 0));
-          profitSeries = revSeries.map((r, i) => r - costSeries[i]);
-        }
-      } else {
-        document.getElementById('mainChartTitle').textContent = `📈 ยอดขาย & กำไรสะสมประจำเดือน (${selectedMonth})`;
-        const dateSet = new Set();
-        filteredSales.forEach(s => dateSet.add(s.date));
-        filteredCosts.forEach(c => dateSet.add(c.date));
-        const sortedDates = Array.from(dateSet).sort();
-        if (sortedDates.length === 0) {
-          labels = ['ไม่มีข้อมูล'];
-          revSeries = [0];
-          costSeries = [0];
-          profitSeries = [0];
-        } else {
-          labels = sortedDates.map(d => formatThaiDate(d));
-          let runRev = 0;
-          let runCost = 0;
-          sortedDates.forEach(d => {
-            const dRev = filteredSales.filter(s => s.date === d).reduce((a, b) => a + Number(b.amount || 0), 0);
-            const dCost = filteredCosts.filter(c => c.date === d).reduce((a, b) => a + Number(b.amount || 0), 0);
-            runRev += dRev;
-            runCost += dCost;
-            revSeries.push(dRev);
-            costSeries.push(dCost);
-            profitSeries.push(runRev - runCost);
-          });
-        }
-      }
-
-      const lineCtx = document.getElementById('profitLineChart').getContext('2d');
-      if (lineChartInstance) lineChartInstance.destroy();
-
-      // กราฟหลักเป็นกราฟเส้นอย่างเดียว เปรียบเทียบ รายรับ ต้นทุน และกำไรสุทธิ
-      lineChartInstance = new Chart(lineCtx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'กำไรสุทธิ (฿)',
-              data: profitSeries,
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.12)',
-              borderWidth: 2.5,
-              pointBackgroundColor: '#059669',
-              pointRadius: 3.5,
-              tension: 0.35,
-              fill: false
-            },
-            {
-              label: 'รายรับ (฿)',
-              data: revSeries,
-              borderColor: '#ec4899',
-              backgroundColor: 'rgba(236, 72, 153, 0.12)',
-              borderWidth: 2.5,
-              pointBackgroundColor: '#db2777',
-              pointRadius: 3.5,
-              tension: 0.35,
-              fill: false
-            },
-            {
-              label: 'ต้นทุน (฿)',
-              data: costSeries,
-              borderColor: '#a855f7',
-              backgroundColor: 'rgba(168, 85, 247, 0.12)',
-              borderWidth: 2,
-              borderDash: [5, 4],
-              pointBackgroundColor: '#9333ea',
-              pointRadius: 3,
-              tension: 0.35,
-              fill: false
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top',
-              labels: { boxWidth: 12, font: { size: 10, family: 'Kanit' } }
-            }
-          },
-          scales: {
-            y: { ticks: { font: { size: 10, family: 'Kanit' } } },
-            x: { ticks: { font: { size: 10, family: 'Kanit' } } }
-          }
-        }
-      });
-
-      // 2. กราฟวงกลม (ต้นทุน vs กำไร หรือ มือถือ vs ทีวี)
-      const pieCtx = document.getElementById('devicePieChart').getContext('2d');
-      if (pieChartInstance) pieChartInstance.destroy();
-
-      let pieLabels = [];
-      let pieData = [];
-      let pieColors = [];
-
-      if (pieChartMode === 'cost_vs_profit') {
-        document.getElementById('pieChartTitle').textContent = '🍩 ต้นทุน vs กำไร';
-        const positiveProfit = Math.max(0, netProfit);
-        pieLabels = ['ต้นทุน (฿)', 'กำไรสุทธิ (฿)'];
-        pieData = (totalCost === 0 && positiveProfit === 0) ? [1, 0] : [totalCost, positiveProfit];
-        pieColors = ['#c084fc', '#34d399'];
-        document.getElementById('pieSummaryText').textContent = `ต้นทุน ${totalCost.toLocaleString()}฿ | กำไร ${netProfit.toLocaleString()}฿`;
-      } else {
-        document.getElementById('pieChartTitle').textContent = '🍩 มือถือ vs ทีวี';
-        const mobileRev = filteredSales.filter(s => s.device !== 'tv').reduce((acc, s) => acc + Number(s.amount || 0), 0);
-        const tvRev = filteredSales.filter(s => s.device === 'tv').reduce((acc, s) => acc + Number(s.amount || 0), 0);
-        pieLabels = ['มือถือ/iPad/คอม (฿)', 'ทีวี (฿)'];
-        pieData = (mobileRev === 0 && tvRev === 0) ? [0, 0] : [mobileRev, tvRev];
-        pieColors = ['#f472b6', '#a855f7'];
-        document.getElementById('pieSummaryText').textContent = `มือถือ ${mobileRev.toLocaleString()}฿ | ทีวี ${tvRev.toLocaleString()}฿`;
-      }
-
-      pieChartInstance = new Chart(pieCtx, {
-        type: 'doughnut',
-        data: {
-          labels: pieLabels,
-          datasets: [{
-            data: pieData,
-            backgroundColor: pieColors,
-            borderWidth: 2,
-            borderColor: '#ffffff'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '58%',
-          plugins: {
-            legend: {
-              display: true,
-              position: 'bottom',
-              labels: { boxWidth: 8, font: { size: 9, family: 'Kanit' } }
-            }
-          }
-        }
-      });
-
-      // ตั้งค่าเดือนเริ่มต้นให้ตัวกรองอันดับลูกค้าและประวัติสลิป
-      const monthInput = document.getElementById('rankingMonthFilter');
-      if (!monthInput.value) {
-        monthInput.value = toLocalYMD(new Date()).slice(0, 7);
-      }
-      const histMonthInput = document.getElementById('historyMonthFilter');
-      if (histMonthInput && !histMonthInput.value) {
-        histMonthInput.value = toLocalYMD(new Date()).slice(0, 7);
-      }
-
-      renderCustomerRanking();
-      renderRecent10Buyers();
-      renderSalesHistorySection();
-    }
-
-    function renderRecent10Buyers() {
-      const container = document.getElementById('recent10BuyersList');
-      if (!container) return;
-
-      const latest10 = [...salesHistory].slice(-10).reverse();
-      if (latest10.length === 0) {
-        container.innerHTML = `<p class="text-center text-gray-400 py-4">ยังไม่มีรายการสั่งซื้อค่ะ</p>`;
-        return;
-      }
-
-      container.innerHTML = latest10.map((item, idx) => {
-        const devLabel = item.device === 'tv' ? '📺 ทีวี' : '📱 มือถือ';
-        const timeStr = item.time ? `${item.time} น.` : '-';
-        return `
-          <div onclick="openCustomerDetailModal('${encodeURIComponent(item.customer || 'ลูกค้าทั่วไป')}')" class="bg-pink-50/70 hover:bg-pink-100/80 px-2.5 py-2 rounded-xl border border-pink-100 flex justify-between items-center gap-2 cursor-pointer transition">
-            <div class="min-w-0">
-              <div class="flex items-center gap-1">
-                <span class="text-[10px] font-bold text-pink-500">#${idx + 1}</span>
-                <span class="font-bold text-gray-800 truncate">${item.customer || 'ลูกค้าทั่วไป'}</span>
-              </div>
-              <p class="text-[10px] text-gray-500 truncate">🎬 ${item.days} วัน (${devLabel}) • 🕒 ${formatThaiDate(item.date)} ${timeStr}</p>
-            </div>
-            <span class="font-bold text-pink-600 bg-white px-2 py-0.5 rounded-lg border border-pink-200 text-[11px] shrink-0">+${Number(item.amount || 0).toLocaleString()}฿</span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function openCustomerDetailModal(encodedName) {
-      const customerName = decodeURIComponent(encodedName);
-      const modal = document.getElementById('customerDetailModal');
-      const nameEl = document.getElementById('detailCustomerName');
-      const statsEl = document.getElementById('detailCustomerStats');
-      const listEl = document.getElementById('detailCustomerOrdersList');
-
-      const customerOrders = salesHistory
-        .filter(s => (s.customer || 'ลูกค้าทั่วไป') === customerName)
-        .slice()
-        .reverse();
-
-      const totalSpent = customerOrders.reduce((sum, o) => sum + Number(o.amount || 0), 0);
-      nameEl.textContent = `👤 ${customerName}`;
-      statsEl.textContent = `ยอดซื้อรวมทั้งหมด ${totalSpent.toLocaleString()} บาท (${customerOrders.length} สลิป/คำสั่งซื้อ)`;
-
-      if (customerOrders.length === 0) {
-        listEl.innerHTML = `<p class="text-center text-gray-400 py-6">ไม่พบรายการคำสั่งซื้อของลูกค้ารายนี้ค่ะ</p>`;
-      } else {
-        listEl.innerHTML = customerOrders.map((ord, index) => {
-          const slipOrderNum = customerOrders.length - index;
-          const devText = ord.device === 'tv' ? '📺 ทีวี' : '📱 มือถือ/iPad/คอม';
-          return `
-            <div class="bg-pink-50/70 border border-pink-200 rounded-2xl p-3 space-y-1">
-              <div class="flex justify-between items-center">
-                <span class="text-[11px] font-bold text-pink-700 bg-white px-2 py-0.5 rounded-full border border-pink-200">🧾 สลิปที่ #${slipOrderNum}</span>
-                <span class="font-bold text-emerald-600 text-xs">${Number(ord.amount || 0).toLocaleString()} บาท</span>
-              </div>
-              <p class="text-xs font-semibold text-gray-800 pt-0.5">🎬 รายการ: Netflix 4K (${ord.days} วัน) • ${devText} ${ord.profileLabel ? `(${ord.profileLabel})` : ''}</p>
-              <div class="flex justify-between text-[10px] text-gray-500 pt-1 border-t border-pink-100">
-                <span>🕒 ซื้อเมื่อ: ${formatThaiDate(ord.date)} ${ord.time ? `เวลา ${ord.time} น.` : ''}</span>
-                <span>📅 หมดอายุ: ${ord.expireDate ? formatThaiDate(ord.expireDate) : '-'}</span>
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function closeCustomerDetailModal() {
-      const modal = document.getElementById('customerDetailModal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function onHistoryScopeChange() {
-      const scope = document.getElementById('historyScopeMode').value;
-      const monthInput = document.getElementById('historyMonthFilter');
-      if (monthInput) {
-        monthInput.classList.toggle('hidden', scope !== 'month');
-        if (scope === 'month' && !monthInput.value) {
-          monthInput.value = toLocalYMD(new Date()).slice(0, 7);
-        }
-      }
-      renderSalesHistorySection();
-    }
-
-    function renderSalesHistorySection() {
-      const histContainer = document.getElementById('salesHistoryList');
-      const summaryEl = document.getElementById('slipHistorySummary');
-      if (!histContainer || !summaryEl) return;
-
-      const scope = document.getElementById('historyScopeMode')?.value || 'all';
-      const selectedMonth = document.getElementById('historyMonthFilter')?.value || toLocalYMD(new Date()).slice(0, 7);
-
-      const listToShow = scope === 'month'
-        ? salesHistory.filter(s => s.date && s.date.startsWith(selectedMonth))
-        : salesHistory;
-
-      const totalAmount = listToShow.reduce((acc, item) => acc + Number(item.amount || 0), 0);
-      const scopeLabel = scope === 'month' ? `เดือน ${selectedMonth}` : 'ทุกเดือน/ทุกปี (ทั้งหมด)';
-      summaryEl.textContent = `${scopeLabel}: มี ${listToShow.length} สลิป • ยอดรวม ${totalAmount.toLocaleString()} บาท`;
-
-      if (listToShow.length === 0) {
-        histContainer.innerHTML = `<p class="text-center text-gray-400 py-4 bg-pink-50/40 rounded-2xl">ยังไม่มีสลิปการซื้อใน${scope === 'month' ? 'เดือนนี้' : 'ระบบ'}ค่ะ</p>`;
-        return;
-      }
-
-      histContainer.innerHTML = [...listToShow].reverse().map((item, idx) => {
-        const slipNo = listToShow.length - idx;
-        const devLabel = item.device === 'tv' ? '📺 ทีวี' : '📱 มือถือ/iPad/คอม';
-        const profLabel = item.profileLabel ? ` • ${item.profileLabel}` : '';
-        const expLabel = item.expireDate ? `หมดอายุ ${formatThaiDate(item.expireDate)}` : '';
-
-        return `
-          <div class="bg-pink-50/60 hover:bg-pink-50 px-3 py-2.5 rounded-2xl border border-pink-100 space-y-1 transition">
-            <div class="flex justify-between items-start gap-2">
-              <div>
-                <span class="text-[10px] font-bold bg-white text-pink-600 px-2 py-0.5 rounded-full border border-pink-200 mr-1">สลิป #${slipNo}</span>
-                <span class="font-bold text-gray-800 text-xs">👤 ${item.customer}</span>
-              </div>
-              <span class="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 text-xs shrink-0">+${Number(item.amount || 0).toLocaleString()} ฿</span>
-            </div>
-            <p class="text-[11px] text-gray-700 font-medium">
-              🎬 ซื้อ: <span class="text-pink-700 font-semibold">Netflix 4K (${item.days} วัน)</span> • ${devLabel}${profLabel}
-            </p>
-            <div class="flex justify-between items-center text-[10px] text-gray-400 pt-0.5 border-t border-pink-100/80">
-              <span>🗓️ ทำรายการ: ${formatThaiDate(item.date)} ${item.time ? `เวลา ${item.time} น.` : ''}</span>
-              <span>${expLabel}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderCustomerRanking() {
-      const selectedMonth = document.getElementById('rankingMonthFilter').value; // YYYY-MM
-      const container = document.getElementById('topCustomersList');
-
-      const filtered = salesHistory.filter(s => s.date && s.date.startsWith(selectedMonth));
-      if (filtered.length === 0) {
-        container.innerHTML = `<p class="text-center text-amber-700/60 text-[11px] py-3">ยังไม่มีข้อมูลยอดซื้อในเดือนที่เลือกค่ะ</p>`;
-        return;
-      }
-
-      const customerTotals = {};
-      filtered.forEach(s => {
-        const name = s.customer || 'ลูกค้าทั่วไป';
-        if (!customerTotals[name]) {
-          customerTotals[name] = { name, total: 0, count: 0 };
-        }
-        customerTotals[name].total += Number(s.amount);
-        customerTotals[name].count += 1;
-      });
-
-      const ranked = Object.values(customerTotals).sort((a, b) => b.total - a.total);
-      const medals = ['🥇', '🥈', '🥉'];
-
-      container.innerHTML = ranked.map((c, idx) => `
-        <div onclick="openCustomerDetailModal('${encodeURIComponent(c.name)}')" class="flex justify-between items-center bg-white hover:bg-amber-50 px-3 py-2 rounded-xl border border-amber-100 shadow-2xs cursor-pointer transition">
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-sm w-5 text-center">${medals[idx] || `#${idx + 1}`}</span>
-            <div>
-              <p class="font-bold text-gray-800 text-xs underline decoration-amber-300">${c.name}</p>
-              <p class="text-[10px] text-gray-400">ซื้อทั้งหมด ${c.count} ครั้งในเดือนนี้ • กดดูสลิป</p>
-            </div>
-          </div>
-          <span class="font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 text-xs">
-            ${c.total.toLocaleString()} บาท
-          </span>
-        </div>
-      `).join('');
-    }
-
-    function clearHistoryPrompt() {
-      showConfirm('ต้องการล้างประวัติยอดขายและต้นทุนย้อนหลังทั้งหมดใช่ไหมคะ?', () => {
-        salesHistory = [];
-        costHistory = [];
-        saveData();
-        renderProfitTab();
-        showToast('ล้างประวัติเรียบร้อยแล้ว', '🧹');
-      });
-    }
-
-    // ================= เริ่มต้นระบบเมื่อโหลดหน้าเว็บ =================
+    // ================= เริ่มต้นระบบ =================
     window.onload = function () {
       document.getElementById('newAccExpire').value = getFutureDateStr(30);
-      document.getElementById('templateEditor').value = tvTemplate;
+      document.getElementById('templateEditor').value = mobileTemplate;
       updateAlertBadge();
+      updateKnownCustomersDatalist();
       populateAccountDropdown();
       calculatePrice();
     };
